@@ -3,13 +3,13 @@ import pandas as pd
 
 # Define constants
 R = 8.314  # Gas constant, J/(mol K)
-A = 200  # Base growth rate potential in micrometers per second
+A = 6000 #10000  # Base growth rate potential in micrometers per second # checnge this one to check the effect of growth rate
 E_a = 50000  # Activation energy, J/mol
 gamma_0 = 0.01  # Base decay rate, per second
-k = 0.002  # Decay rate temperature factor, per °C
-T_ref = 1000 + 273.15  # Reference temperature in Kelvin (1000 °C in Kelvin)
-d_opt = 1.2  # Optimal Fe catalyst thickness in nm
-sigma_d = 0.2  # Standard deviation for Gaussian thickness effect in nm
+k = 0.0025  # Decay rate temperature factor, per °C  
+T_ref = 700 + 273.15  # Reference temperature in Kelvin (1000 °C in Kelvin)
+d_opt = 1.2 #2 #1.2  # Optimal Fe catalyst thickness in nm  # checnge this one to check the effect of growth rate
+sigma_d = 1 #500 #0.2  # Standard deviation for Gaussian thickness effect in nm  # checnge this one to check the effect of growth rate
 
 # Function to calculate growth rate
 def growth_rate(T_p_C, t, d):
@@ -92,6 +92,6 @@ def simulate_and_save(temperature_range, thickness_range, max_time=1200):
 # Input ranges
 temperature_range = [600, 625, 650,675, 700, 725, 750, 775, 800, 825, 850, 875, 900, 925, 950, 975, 1000]  # List of temperatures in Celsius
 thickness_range = [0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]  # List of catalyst thicknesses in nm
-# temperature_range = [1000]  # List of temperatures in Celsius
-# thickness_range = [1.2] 
+# temperature_range = [625]  # List of temperatures in Celsius
+# thickness_range = [2] 
 simulate_and_save(temperature_range, thickness_range)
