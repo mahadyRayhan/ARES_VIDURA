@@ -396,3 +396,104 @@ def optimize_model_BYS(base_model, param_dist, X_train, y_train):
     print("Best parameters found by BayesSearchCV:\n")
     print(best_params, "Best Score:", best_score)
     return best_params
+
+def true_pred_plot_subplots(y_test, predictions, model_names, target_variable, font_size=12):
+    """
+    Plot True vs Predicted values for multiple models in separate subplots.
+
+    Parameters:
+        y_test: array-like
+            True values of the target variable.
+        predictions: list of array-like
+            Predicted values from multiple models.
+        model_names: list of str
+            Names of the models for labeling.
+        target_variable: str
+            Name of the target variable.
+        font_size: int, optional
+            Font size for plot labels and annotations.
+    """
+    num_models = len(model_names)
+    fig, axes = plt.subplots(1, num_models, figsize=(15, 5), sharex=True, sharey=True)
+
+    y_test = np.array(y_test).ravel()
+
+    for i, (y_pred, model_name, ax) in enumerate(zip(predictions, model_names, axes)):
+        y_pred = np.array(y_pred).ravel()
+
+        # Scatter plot
+        sns.scatterplot(x=y_test, y=y_pred, ax=ax, alpha=0.7)
+        
+        # Regression line
+        sns.regplot(x=y_test, y=y_pred, ax=ax, scatter=False, color='black', line_kws={'linewidth': 1})
+
+        # Add diagonal reference line
+        ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], linestyle='--', color='gray', linewidth=2)
+
+        # Title and labels
+        ax.set_title(f"{model_name} - {target_variable}", fontsize=font_size)
+        ax.set_xlabel(f"True Value ({target_variable})", fontsize=font_size)
+        ax.set_ylabel(f"Predicted Value ({target_variable})", fontsize=font_size)
+
+        # Calculate R2 score
+        R2 = r2_score(y_test, y_pred)
+        ax.annotate(f'R2 = {R2:.3f}', xy=(0.05, 0.9), xycoords='axes fraction',
+                    ha='left', va='center', fontsize=font_size,
+                    bbox={'boxstyle': 'round', 'fc': 'powderblue', 'ec': 'navy'})
+    
+    plt.tight_layout()
+    plt.show()
+    
+def true_pred_plot_multiple(y_test, predictions, model_names, target_variable, font_size=12):
+    """
+    Plot True vs Predicted values for multiple models on the same figure.
+
+    Parameters:
+        y_test: array-like
+            True values of the target variable.
+        predictions: list of array-like
+            Predicted values from multiple models.
+        model_names: list of str
+            Names of the models for labeling.
+        target_variable: str
+            Name of the target variable.
+        font_size: int, optional
+            Font size for plot labels and annotations.
+    """
+    plt.figure(figsize=(10, 10))
+    
+    # Ensure y_test is a numpy array
+    y_test = np.array(y_test).ravel()
+    print(y_test.shape)
+    
+    colors = ['blue', 'green', 'red']  # Colors for each model
+    
+    for i, (y_pred, model_name, color) in enumerate(zip(predictions, model_names, colors)):
+        y_pred = np.array(y_pred)
+        
+        # Scatter plot
+        sns.scatterplot(x=y_test, y=y_pred, label=f"{model_name}", color=color, alpha=0.7)
+        
+        # Add regression line for each model
+        sns.regplot(x=y_test, y=y_pred, scatter=False, color=color, line_kws={'label': f'{model_name} fit', 'lw': 1})
+        
+        # Calculate R2 score
+        R2 = r2_score(y_test, y_pred)
+        plt.annotate(f'{model_name} R2 = {R2:.3f}', 
+                     xy=(0.1, 0.93 - i * 0.05), xycoords='axes fraction',
+                     ha='left', va='center', fontsize=font_size,
+                     bbox={'boxstyle': 'round', 'fc': 'powderblue', 'ec': 'navy'})
+
+    # Add diagonal reference line
+    plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], linestyle='--', color='gray', linewidth=2, label='Ideal')
+
+    plt.title(f'True vs Predicted Values for {target_variable}', fontsize=font_size + 2)
+    plt.xlabel(f'True Value ({target_variable})', fontsize=font_size)
+    plt.ylabel(f'Predicted Value ({target_variable})', fontsize=font_size)
+    
+    plt.xticks(fontsize=font_size)
+    plt.yticks(fontsize=font_size)
+    plt.legend(fontsize=font_size)
+    
+    # Show the plot
+    plt.show()
