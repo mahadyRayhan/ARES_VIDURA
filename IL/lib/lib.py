@@ -1,5 +1,6 @@
 import pprint
 import warnings
+import textwrap
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -496,4 +497,53 @@ def true_pred_plot_multiple(y_test, predictions, model_names, target_variable, f
     plt.legend(fontsize=font_size)
     
     # Show the plot
+    plt.show()
+    
+def fea_side_by_side(models, features, model_names, fontsize=12, wrap_length=15):
+    """
+    Plot feature importances for multiple models side by side with wrapped feature names.
+
+    Parameters:
+        models: list
+            List of models for which to plot feature importance.
+        features: list
+            List of feature names.
+        model_names: list
+            Names of the models (e.g., ['Random Forest', 'XGBoost', 'ANN']).
+        fontsize: int, optional
+            Font size for plot labels and titles.
+        wrap_length: int, optional
+            Maximum length of each line for feature names.
+    """
+    num_models = len(models)
+    fig, axes = plt.subplots(1, num_models, figsize=(5 * num_models, 6), sharey=True)
+    
+    # Wrap feature names
+    wrapped_features = ['\n'.join(textwrap.wrap(feature, wrap_length)) for feature in features]
+    
+    for i, (model, model_name, ax) in enumerate(zip(models, model_names, axes)):
+        if model_name.lower() == "ann":
+            input_layer_weights = model.coefs_[0]
+            feature_importance = np.abs(input_layer_weights).mean(axis=1)
+            total_importance = np.sum(feature_importance)
+            normalized_importance = feature_importance / total_importance
+            feature_importances_df = pd.DataFrame({'Feature': wrapped_features, 'Importance': normalized_importance})
+        else:
+            feature_importances_df = pd.DataFrame({'Feature': wrapped_features, 'Importance': model.feature_importances_})
+            feature_importances_df = feature_importances_df.sort_values(by='Importance', ascending=False)
+        
+        # Plot feature importances
+        sns.barplot(data=feature_importances_df, x='Importance', y='Feature', ax=ax, palette='viridis')
+        ax.set_title(f'{model_name} Feature Importance', fontsize=fontsize, fontweight='bold')
+        ax.set_xlabel('Importance', fontsize=fontsize, fontweight='bold')
+        if i == 0:  # Only the first plot shows the y-axis label
+            ax.set_ylabel('Features', fontsize=fontsize, fontweight='bold')
+        else:
+            ax.set_ylabel('')
+        
+        # Adjust tick parameters for both axes
+        ax.tick_params(axis='y', labelsize=fontsize)
+        ax.tick_params(axis='x', labelsize=fontsize)
+    
+    plt.tight_layout()
     plt.show()
