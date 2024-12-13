@@ -1,0 +1,23 @@
+[
+    {
+      "question": "How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",
+      "answer": "The defect density in carbon nanotubes significantly influences their mechanical properties and functionalization potential. Structural defects, such as vacancies and dislocations, reduce tensile strength but create active sites for chemical functionalization. Controlled introduction of defects via processes like acid treatment can enhance the attachment of functional groups, improving their reactivity without severely compromising structural integrity."
+    },
+    {
+      "question": "What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?",
+      "answer": "In fluidized bed CVD, reaction temperature, precursor flow rates, and catalyst distribution are critical thermodynamic and kinetic factors. Higher temperatures promote decomposition of precursor gases but risk producing amorphous carbon. Uniform fluidization ensures efficient gas-catalyst interaction, while kinetic control is achieved by optimizing flow rates to balance reaction time and carbon atom diffusion into the catalyst."
+    },
+    {
+      "question": "How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",
+      "answer": "Amine functionalization introduces basic sites, enhancing applications like CO2 adsorption and drug delivery by promoting interactions with acidic molecules. Carboxyl functionalization improves hydrophilicity and dispersion in polar solvents, making nanotubes suitable for composites and biomedical uses. The choice depends on the target application, as each functional group alters the electronic and surface chemistry of the nanotubes differently."
+    },
+    {
+      "question": "What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?",
+      "answer": "The diameter and chirality of SWCNTs directly influence their bandgap, determining whether they exhibit metallic or semiconducting behavior. Smaller diameters increase the bandgap, while chirality defines the electronic density of states and optical absorption properties. These characteristics are crucial for applications in nanoelectronics and optoelectronics, such as field-effect transistors and photodetectors."
+    },
+    {
+      "question": "What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?",
+      "answer": "Scaling up the production of defect-free carbon nanotubes faces challenges like maintaining uniformity in diameter, chirality, and structural integrity. Key issues include optimizing catalyst activity, preventing aggregation during synthesis, and controlling reaction parameters. Additionally, ensuring cost-efficiency while minimizing environmental impact remains a significant hurdle for industrial scalability."
+    }
+  ]
+  
