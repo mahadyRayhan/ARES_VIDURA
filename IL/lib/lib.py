@@ -398,22 +398,8 @@ def optimize_model_BYS(base_model, param_dist, X_train, y_train):
     print(best_params, "Best Score:", best_score)
     return best_params
 
-def true_pred_plot_subplots(y_test, predictions, model_names, target_variable, font_size=12):
-    """
-    Plot True vs Predicted values for multiple models in separate subplots.
+def true_pred_plot_subplots(y_test, predictions, model_names, target_variable, save_path= 'graphs/true_pred_subplots.png', font_size=14, model_highlight = 3):
 
-    Parameters:
-        y_test: array-like
-            True values of the target variable.
-        predictions: list of array-like
-            Predicted values from multiple models.
-        model_names: list of str
-            Names of the models for labeling.
-        target_variable: str
-            Name of the target variable.
-        font_size: int, optional
-            Font size for plot labels and annotations.
-    """
     num_models = len(model_names)
     fig, axes = plt.subplots(1, num_models, figsize=(15, 5), sharex=True, sharey=True)
 
@@ -441,26 +427,22 @@ def true_pred_plot_subplots(y_test, predictions, model_names, target_variable, f
         ax.annotate(f'R2 = {R2:.3f}', xy=(0.05, 0.9), xycoords='axes fraction',
                     ha='left', va='center', fontsize=font_size,
                     bbox={'boxstyle': 'round', 'fc': 'powderblue', 'ec': 'navy'})
-    
-    plt.tight_layout()
-    plt.show()
-    
-def true_pred_plot_multiple(y_test, predictions, model_names, target_variable, font_size=12):
-    """
-    Plot True vs Predicted values for multiple models on the same figure.
 
-    Parameters:
-        y_test: array-like
-            True values of the target variable.
-        predictions: list of array-like
-            Predicted values from multiple models.
-        model_names: list of str
-            Names of the models for labeling.
-        target_variable: str
-            Name of the target variable.
-        font_size: int, optional
-            Font size for plot labels and annotations.
-    """
+        # Adjust tick parameters for all subplots
+        ax.tick_params(axis='both', which='major', labelsize=font_size - 2, width=1.5, length=6)
+
+        # Make the last subplot's border thick and bold
+        if i == model_highlight - 1:
+            for spine in ax.spines.values():
+                spine.set_linewidth(2.5)  # Thicker border
+                spine.set_edgecolor('black')  # Bold black border
+
+    fig.suptitle("Test set performance", fontsize=18)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight') 
+    plt.show()
+        
+def true_pred_plot_multiple(y_test, predictions, model_names, target_variable, font_size=12):
     plt.figure(figsize=(10, 10))
     
     # Ensure y_test is a numpy array
@@ -499,22 +481,7 @@ def true_pred_plot_multiple(y_test, predictions, model_names, target_variable, f
     # Show the plot
     plt.show()
     
-def fea_side_by_side(models, features, model_names, fontsize=12, wrap_length=15):
-    """
-    Plot feature importances for multiple models side by side with wrapped feature names.
-
-    Parameters:
-        models: list
-            List of models for which to plot feature importance.
-        features: list
-            List of feature names.
-        model_names: list
-            Names of the models (e.g., ['Random Forest', 'XGBoost', 'ANN']).
-        fontsize: int, optional
-            Font size for plot labels and titles.
-        wrap_length: int, optional
-            Maximum length of each line for feature names.
-    """
+def fea_side_by_side(models, features, model_names, save_path = 'graphs/important_features_subplot.png', title='Feature importance analysis', wrap_length=14, model_highlight = 3):
     num_models = len(models)
     fig, axes = plt.subplots(1, num_models, figsize=(5 * num_models, 6), sharey=True)
     
@@ -534,16 +501,158 @@ def fea_side_by_side(models, features, model_names, fontsize=12, wrap_length=15)
         
         # Plot feature importances
         sns.barplot(data=feature_importances_df, x='Importance', y='Feature', ax=ax, palette='viridis')
-        ax.set_title(f'{model_name} Feature Importance', fontsize=fontsize, fontweight='bold')
-        ax.set_xlabel('Importance', fontsize=fontsize, fontweight='bold')
+        ax.set_title(f'{model_name} Feature Importance')
+        ax.set_xlabel('Importance', fontweight='bold')
         if i == 0:  # Only the first plot shows the y-axis label
-            ax.set_ylabel('Features', fontsize=fontsize, fontweight='bold')
+            ax.set_ylabel('Features', fontweight='bold')
         else:
             ax.set_ylabel('')
         
         # Adjust tick parameters for both axes
-        ax.tick_params(axis='y', labelsize=fontsize)
-        ax.tick_params(axis='x', labelsize=fontsize)
-    
+        ax.tick_params(axis='y')
+        ax.tick_params(axis='x')
+
+        # Make the 3rd subplot's border thick and bold
+        if i == model_highlight - 1:
+            for spine in ax.spines.values():
+                spine.set_linewidth(2.5)  # Thicker border
+                spine.set_edgecolor('black')  # Bold black border
+
+    fig.suptitle(title, fontsize=18)
     plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight') 
+    plt.show()
+
+def plot_dual_y_axis(models_list, r2_sim_list, rmse_sim_list, mae_sim_list, 
+                     r2_exp_sim_list, rmse_exp_sim_list, mae_exp_sim_list, save_path= 'graphs/metrics_across_models.png', title='Comparison of Metrics Across Models'):
+    # Create the dual y-axis plots for both Simulated Data and Simulated & Experimental Data
+    fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(18, 6), sharey=True)
+
+    # X positions for models
+    x = np.arange(len(models_list))
+    width = 0.3
+
+    # ------ Plot for Simulated Data ------
+    # Plot R² on the left y-axis
+    ax1.set_xlabel('Models', fontsize=14)
+    ax1.set_ylabel('R²', fontsize=14, color='tab:blue')
+    bars_r2_sim = ax1.bar(x, r2_sim_list, width, color='tab:blue', alpha=0.6, label='R²')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.set_ylim(0.9, 1.0)
+
+    # Add R² annotations
+    for bar in bars_r2_sim:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+                 ha='center', va='bottom', fontsize=10, fontweight='bold', rotation=45)
+
+    # Plot RMSE and MAE on the right y-axis
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('RMSE / MAE', fontsize=14, color='tab:orange')
+    bars_rmse_sim = ax2.bar(x - width / 2, rmse_sim_list, width, color='tab:orange', alpha=0.6, label='RMSE')
+    bars_mae_sim = ax2.bar(x + width / 2, mae_sim_list, width, color='tab:green', alpha=0.6, label='MAE')
+    ax2.tick_params(axis='y', labelcolor='tab:orange')
+    ax2.set_ylim(0, max(rmse_sim_list + mae_sim_list) * 1.2)
+
+    # Add RMSE and MAE annotations
+    for bars in [bars_rmse_sim, bars_mae_sim]:
+        for bar in bars:
+            height = bar.get_height()
+            ax2.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+                     ha='center', va='bottom', fontsize=10, fontweight='bold', rotation=45)
+
+    # Title and legend for Simulated Data
+    ax1.set_title('Simulated Data', fontsize=16)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(models_list)
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+
+    # ------ Plot for Simulated & Experimental Data ------
+    # Plot R² on the left y-axis
+    ax3.set_xlabel('Models', fontsize=14)
+    ax3.set_ylabel('R²', fontsize=14, color='tab:blue')
+    bars_r2_exp_sim = ax3.bar(x, r2_exp_sim_list, width, color='tab:blue', alpha=0.6, label='R²')
+    ax3.tick_params(axis='y', labelcolor='tab:blue')
+    ax3.set_ylim(0.9, 1.0)
+
+    # Add R² annotations
+    for bar in bars_r2_exp_sim:
+        height = bar.get_height()
+        ax3.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+                 ha='center', va='bottom', fontsize=10, fontweight='bold', rotation=45)
+
+    # Plot RMSE and MAE on the right y-axis
+    ax4 = ax3.twinx()
+    ax4.set_ylabel('RMSE / MAE', fontsize=14, color='tab:orange')
+    bars_rmse_exp_sim = ax4.bar(x - width / 2, rmse_exp_sim_list, width, color='tab:orange', alpha=0.6, label='RMSE')
+    bars_mae_exp_sim = ax4.bar(x + width / 2, mae_exp_sim_list, width, color='tab:green', alpha=0.6, label='MAE')
+    ax4.tick_params(axis='y', labelcolor='tab:orange')
+    ax4.set_ylim(0, max(rmse_exp_sim_list + mae_exp_sim_list) * 1.2)
+
+    # Add RMSE and MAE annotations
+    for bars in [bars_rmse_exp_sim, bars_mae_exp_sim]:
+        for bar in bars:
+            height = bar.get_height()
+            ax4.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+                     ha='center', va='bottom', fontsize=10, fontweight='bold', rotation=45)
+
+    # Title and legend for Simulated & Experimental Data
+    ax3.set_title('Simulated & Experimental Data', fontsize=16)
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(models_list)
+    ax3.legend(loc='upper left')
+    ax4.legend(loc='upper right')
+
+    # Overall adjustments
+    fig.suptitle(title, fontsize=16)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight') 
+    plt.show()
+    
+def plot_dual_y_axis_single_matrices(models_list, r2_exp_sim_list, rmse_exp_sim_list, mae_exp_sim_list, save_path = 'graphs/output.png', title = 'Simulated Data'):
+    # Plot for Simulated & Experimental Data
+    fig, ax1 = plt.subplots(figsize=(9, 6))
+
+    # X positions for models
+    x = np.arange(len(models_list))
+    width = 0.3
+
+    # Plot R² on the left y-axis
+    ax1.set_xlabel('Models', fontsize=14)
+    ax1.set_ylabel('R²', fontsize=14, color='tab:blue')
+    bars_r2_exp_sim = ax1.bar(x, r2_exp_sim_list, width, color='tab:blue', alpha=0.6, label='R²')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.set_ylim(0.9, 1.0)
+
+    # Add R² annotations
+    for bar in bars_r2_exp_sim:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+                 ha='center', va='bottom', fontsize=10, fontweight='bold', rotation=45)
+
+    # Plot RMSE and MAE on the right y-axis
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('RMSE / MAE', fontsize=14, color='tab:orange')
+    bars_rmse_exp_sim = ax2.bar(x - width / 2, rmse_exp_sim_list, width, color='tab:orange', alpha=0.6, label='RMSE')
+    bars_mae_exp_sim = ax2.bar(x + width / 2, mae_exp_sim_list, width, color='tab:green', alpha=0.6, label='MAE')
+    ax2.tick_params(axis='y', labelcolor='tab:orange')
+    ax2.set_ylim(0, max(rmse_exp_sim_list + mae_exp_sim_list) * 1.2)
+
+    # Add RMSE and MAE annotations
+    for bars in [bars_rmse_exp_sim, bars_mae_exp_sim]:
+        for bar in bars:
+            height = bar.get_height()
+            ax2.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.3f}', 
+                     ha='center', va='bottom', fontsize=10, fontweight='bold', rotation=45)
+
+    # Title and legend for Simulated & Experimental Data
+    ax1.set_title(title, fontsize=16)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(models_list)
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight') 
     plt.show()
