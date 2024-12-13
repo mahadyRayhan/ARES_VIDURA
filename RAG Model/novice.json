@@ -1,0 +1,27 @@
+[
+    {
+      "question": "What are the primary differences between single-walled (SWCNTs) and multi-walled carbon nanotubes (MWCNTs)?",
+      "answer": "Single-walled carbon nanotubes (SWCNTs) are composed of a single cylindrical layer of graphene, with diameters ranging from 0.2 to 2 nm. In contrast, multi-walled carbon nanotubes (MWCNTs) consist of multiple concentric graphene cylinders, with outer diameters between 2 and 100 nm. SWCNTs often exhibit superior electronic properties, while MWCNTs are more robust mechanically due to their layered structure."
+    },
+    {
+      "question": "How does the functionalization of carbon nanotubes improve their properties?",
+      "answer": "Functionalization of carbon nanotubes enhances their solubility, dispersion, and surface interaction capabilities. Covalent functionalization introduces strong bonds by modifying sidewalls or ends of nanotubes, while non-covalent functionalization uses weak interactions like van der Waals forces. These modifications increase the chemical reactivity, hydrophilicity, and application potential of nanotubes in drug delivery, sensing, and energy storage."
+    },
+    {
+      "question": "What are the main synthesis methods for CNTs?",
+      "answer": "The primary methods include chemical vapor deposition (CVD), arc discharge, and laser ablation. Among these, CVD is the most commonly used due to its scalability and flexibility in controlling the properties of CNTs"
+    },
+    {
+      "question": "What are the optimal growth conditions for SWCNTs?",
+      "answer": "High-quality SWCNTs are typically grown at high temperatures (~775°C) using CVD, with water-assisted methods extending catalyst lifetime and enhancing growth height."
+    },
+    {
+      "question": "What are the advantages of using CVD for CNT synthesis?",
+      "answer": "CVD allows precise control over growth parameters, scalability for industrial applications, and the ability to produce CNTs with specific properties by adjusting temperature, catalyst type, and precursor gas composition."
+    },
+    {
+      "question": "How does functionalization enhance CNT properties?",
+      "answer": "Functionalization improves CNT solubility, dispersion, and compatibility with other materials. For example, covalent functionalization modifies the sidewalls to introduce functional groups, increasing reactivity."
+    }
+  ]
+  
