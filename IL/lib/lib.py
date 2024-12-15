@@ -20,6 +20,11 @@ from sklearn.manifold import TSNE
 from matplotlib.patches import Ellipse, Rectangle
 from scipy.stats import norm
 from skopt import BayesSearchCV
+
+plt.rcParams.update({
+    'font.size': 16,
+    'font.family': 'Arial'
+})
 warnings.filterwarnings('ignore')
 
 def normalize_data(data):
