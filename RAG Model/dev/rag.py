@@ -1294,7 +1294,7 @@ Decision:"""
 
     # --- Context Management (Unchanged Logic, prompt updated) ---
     def _manage_context(self, accumulated_context_list: List[str], new_chunk_list: List[Dict[str, Any]],
-                        max_tokens: int = 7000) -> Tuple[List[str], List[Dict[str, Any]]]:
+                        max_tokens: int = 20000) -> Tuple[List[str], List[Dict[str, Any]]]:
         """
         Manages the accumulated context list (deduplication, size control via summarization).
         """
@@ -1808,7 +1808,7 @@ Final Synthesized Answer (provide a direct scientific answer based ONLY on the c
             accumulated_context_list, added_unique_chunks = self._manage_context(
                  accumulated_context_list,
                  retrieved_chunks,
-                 max_tokens=7000
+                 max_tokens=20000
             )
             if added_unique_chunks:
                  reasoning_trace.append(f"Hop {hops_taken}: Added {len(added_unique_chunks)} unique chunks to context.")

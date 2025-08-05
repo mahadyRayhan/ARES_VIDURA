@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import chromadb
 import pandas as pd
 import numpy as np
 from abc import ABC, abstractmethod
@@ -14,6 +15,8 @@ from data_processing import parse_and_chunk_documents
 import config # Import config for defaults
 import json
 
+from graph_db import Neo4jGraphDB # Import the graph DB class
+
 class VectorStore(ABC):
     """Abstract base class for vector stores."""
 
@@ -24,8 +27,9 @@ class VectorStore(ABC):
     @abstractmethod
     def load_or_build(self,
                       documents_path_pattern: str,
-                      chunk_settings: Dict, # This contains strategy, size, overlap
-                      embedding_interface: LLMInterface) -> bool:
+                      chunk_settings: Dict,
+                      embedding_interface: LLMInterface,
+                      graph_db: Neo4jGraphDB) -> bool: # Add graph_db parameter
         """Loads existing vector data or builds it from documents."""
         pass
 
@@ -41,17 +45,18 @@ class VectorStore(ABC):
     def _build_index_internal(self,
                               documents_path_pattern: str,
                               chunk_settings: Dict,
-                              embedding_interface: LLMInterface) -> Optional[List[Dict[str, Any]]]:
-        """Internal helper to parse, chunk, and embed documents."""
-        self.logger.info("Starting internal index build process...")
+                              embedding_interface: LLMInterface,
+                              graph_db: Neo4jGraphDB) -> Optional[List[Dict[str, Any]]]:
+        """Internal helper to parse, chunk, embed documents, and populate KG."""
+        self.logger.info("Starting internal index build process with smart chunking...")
 
         # This now calls the simplified PyPDF2-based parser
         all_chunks_info = parse_and_chunk_documents(
             documents_path_pattern=documents_path_pattern,
-            chunk_strategy=chunk_settings.get('strategy', 'recursive'), # Will be 'recursive'
+            graph_db=graph_db,
+            embedding_interface=embedding_interface,
             chunk_size=chunk_settings.get('size', config.DEFAULT_CHUNK_SIZE),
             chunk_overlap=chunk_settings.get('overlap', config.DEFAULT_CHUNK_OVERLAP),
-            embedding_interface=embedding_interface,
             logger_parent=self.logger
         )
 
@@ -141,10 +146,9 @@ class PandasVectorStore(VectorStore):
             self.vector_db_df = pd.read_csv(self.db_path)
             
             # Convert strings back to numpy arrays and dicts
-            self.vector_db_df['embeddings'] = self.vector_db_df['embeddings_str'].apply(lambda x: np.array(json.loads(x)))
-            self.vector_db_df['metadata'] = self.vector_db_df['metadata_str'].apply(lambda x: json.loads(x))
-            
-            self.vector_db_df.drop(columns=['embeddings_str', 'metadata_str'], inplace=True)
+            self.vector_db_df['embeddings'] = self.vector_db_df['embeddings_list_str'].apply(lambda x: np.array(json.loads(x)))
+            self.vector_db_df['metadata'] = self.vector_db_df['metadata_json_str'].apply(lambda x: json.loads(x))
+            self.vector_db_df.drop(columns=['embeddings_list_str', 'metadata_json_str'], inplace=True)
             
             self.logger.info(f"Vector database loaded successfully. Shape: {self.vector_db_df.shape}")
             self._is_ready = True
@@ -152,11 +156,34 @@ class PandasVectorStore(VectorStore):
         except Exception as e:
             self.logger.exception(f"Unexpected error during CSV DB loading: {e}"); self.vector_db_df = None; return False
 
+    def get_chunk_by_id(self, chunk_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves a single, complete chunk dictionary by its unique chunk_id."""
+        if self.vector_db_df is None or self.vector_db_df.empty:
+            self.logger.warning("Cannot get chunk by ID, DataFrame is not loaded.")
+            return None
+        
+        try:
+            # Find the row where the chunk_id in the metadata dictionary matches.
+            # This is not the most performant way for huge dataframes, but effective.
+            # A better long-term solution would be to set the chunk_id as the DataFrame index.
+            mask = self.vector_db_df['metadata'].apply(lambda meta: isinstance(meta, dict) and meta.get('chunk_id') == chunk_id)
+            result_df = self.vector_db_df.loc[mask]
+
+            if not result_df.empty:
+                # Return the first match as a dictionary
+                return result_df.iloc[0].to_dict()
+            else:
+                self.logger.warning(f"No chunk found with ID: {chunk_id}")
+                return None
+        except Exception as e:
+            self.logger.error(f"Error retrieving chunk by ID '{chunk_id}': {e}")
+            return None
 
     def load_or_build(self,
                       documents_path_pattern: str,
                       chunk_settings: Dict,
-                      embedding_interface: LLMInterface) -> bool:
+                      embedding_interface: LLMInterface,
+                      graph_db: Neo4jGraphDB) -> bool:
         loaded = False
         if not self.in_memory: loaded = self._load_dataframe_from_csv()
         if loaded: self.logger.info("Successfully loaded existing vector data."); self._is_ready = True; return True
@@ -167,7 +194,7 @@ class PandasVectorStore(VectorStore):
 
         self.logger.info("Building new vector index...")
         # _build_index_internal now returns List[{"chunk_text":..., "metadata":..., "embeddings":...}]
-        processed_chunks_with_embeddings = self._build_index_internal(documents_path_pattern, chunk_settings, embedding_interface)
+        processed_chunks_with_embeddings = self._build_index_internal(documents_path_pattern, chunk_settings, embedding_interface, graph_db)
 
         if processed_chunks_with_embeddings:
             df_data_list = []
@@ -273,7 +300,6 @@ class ChromaVectorStore(VectorStore):
 
     def _initialize_chroma_client(self):
         try:
-            import chromadb
             # from chromadb.config import Settings # Older versions might need this
             client_settings = {}
             if self.persist_directory:
@@ -335,12 +361,16 @@ class ChromaVectorStore(VectorStore):
             return True
         except Exception as batch_err: self.logger.exception(f"Error adding batch to ChromaDB: {batch_err}"); return False
 
-    def load_or_build(self, documents_path_pattern: str, chunk_settings: Dict, embedding_interface: LLMInterface) -> bool:
+    def load_or_build(self,
+                    documents_path_pattern: str,
+                    chunk_settings: Dict,
+                    embedding_interface: LLMInterface,
+                    graph_db: Neo4jGraphDB) -> bool: # Add graph_db
         if not self.collection: self.logger.error("ChromaDB collection not initialized."); return False
         if self.collection.count() > 0: self.logger.info(f"ChromaDB collection already has {self.collection.count()} docs."); self._is_ready = True; return True
 
         self.logger.info(f"ChromaDB collection '{self.collection_name}' empty. Building index...")
-        processed_chunks_with_embeddings = self._build_index_internal(documents_path_pattern, chunk_settings, embedding_interface)
+        processed_chunks_with_embeddings = self._build_index_internal(documents_path_pattern, chunk_settings, embedding_interface, graph_db)
         if processed_chunks_with_embeddings:
              populated = self._populate_chroma(processed_chunks_with_embeddings)
              self._is_ready = populated

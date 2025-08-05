@@ -70,7 +70,7 @@ DEFAULT_OPENAI_GENERATION_CONFIG = {
 # --- Other ---
 # Rough estimate for context management, adjust as needed
 CHAR_TO_TOKEN_RATIO = 3.5
-MAX_CONTEXT_TOKENS = 7000
+MAX_CONTEXT_TOKENS = 20000
 
 # Threshold for simple sequence matcher deduplication
 SIMILARITY_THRESHOLD = 0.9

@@ -11,6 +11,7 @@ from llm_interface import LLMInterface # Ensure this imports your updated llm_in
 from vector_store import get_vector_store, VectorStore
 from evaluation import load_feedback_history
 from rag_core import CNTRagSystem # Assuming rag_core.py is also updated if needed
+from graph_db import Neo4jGraphDB # Import the new class
 
 def load_test_questions(filepath: str) -> List[str]:
     """Loads questions from a text file, one question per line."""
@@ -41,6 +42,11 @@ def run_test_query(rag_system: CNTRagSystem, question: str, index: int, user_typ
 
     print("\n--- Final Answer ---")
     print(results.get("final_answer", "N/A"))
+    
+    # --- NEW: Print Proactive Suggestions ---
+    suggestions = results.get("proactive_suggestions")
+    if suggestions:
+        print(suggestions) # The suggestions string is already formatted
 
     print("\n--- Detailed Sources Used for Final Context ---")
     retrieved_sources = results.get("retrieved_sources")
@@ -123,6 +129,10 @@ if __name__ == "__main__":
             use_llm_cache=config.DEFAULT_USE_LLM_CACHE,
             logger=logger
         )
+        
+        # Initialize Neo4j Graph Database
+        logger.info("Initializing Knowledge Graph connection...")
+        graph_db = Neo4jGraphDB(logger=logger)
 
         vector_store = get_vector_store(
             vector_db_type=config.DEFAULT_VECTOR_DB_TYPE,
@@ -136,17 +146,19 @@ if __name__ == "__main__":
             'overlap': config.DEFAULT_CHUNK_OVERLAP,
         }
 
-        logger.info("Loading or building vector store...")
+        logger.info("Loading or building vector store AND populating knowledge graph...")
+        # The build process now handles both KG and Vector DB
         build_success = vector_store.load_or_build(
             documents_path_pattern=config.DEFAULT_DOCUMENTS_PATH_PATTERN,
             chunk_settings=chunk_settings,
-            embedding_interface=llm_interface # This now uses the configured provider for embeddings
+            embedding_interface=llm_interface,
+            graph_db=graph_db # Pass the graph_db instance here
         )
 
         if not build_success or not vector_store.is_ready():
              logger.critical("Vector store initialization failed. Exiting.")
              exit(1)
-        logger.info("Vector store ready.")
+        logger.info("Vector store and Knowledge Graph are ready.")
 
         feedback_history = load_feedback_history(config.DEFAULT_FEEDBACK_DB_PATH, logger)
 
@@ -155,6 +167,7 @@ if __name__ == "__main__":
         cnt_rag_system = CNTRagSystem(
             llm_interface=llm_interface,
             vector_store=vector_store,
+            graph_db=graph_db,
             logger=logger,
             feedback_db_path=config.DEFAULT_FEEDBACK_DB_PATH,
             feedback_history=feedback_history,
@@ -168,6 +181,9 @@ if __name__ == "__main__":
 
     except Exception as e:
         logger.exception(f"Fatal error during RAG system initialization: {e}")
+        # Make sure to close the DB connection on error
+        if 'graph_db' in locals() and graph_db:
+            graph_db.close()
         exit(1)
 
     # --- Load Test Questions ---
@@ -189,4 +205,6 @@ if __name__ == "__main__":
         overall_end_time = time.time()
         logger.info(f"Finished processing all {len(test_questions)} questions in {overall_end_time - overall_start_time:.2f} seconds.")
 
+    if 'graph_db' in locals() and graph_db:
+        graph_db.close()
     logger.info("--- CNT RAG Application Finished ---")

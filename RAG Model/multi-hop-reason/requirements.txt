@@ -1,0 +1,53 @@
+# requirements.txt
+# Graphviz wrapper (requires system Graphviz installed separately)
+# graphviz
+
+# # Environment management
+# python-dotenv
+# python-magic
+
+# # Utilities
+# tenacity
+# pycryptodome
+
+# # AI/LLM libraries
+# google-generativeai
+# langchain-openai
+# langchain-text-splitters
+# chromadb
+
+# # Data science
+# pandas
+# scikit-learn
+
+# # Image & PDF processing
+# Pillow
+# PyPDF2
+# unstructured[pdf]==0.16.11
+# pdfminer.six==20240706
+# PyMuPDF==1.26.3
+
+# # Graph database
+# neo4j
+
+chromadb==1.0.15
+google-generativeai==0.8.5
+graphviz==0.21
+langchain-openai==0.3.28
+langchain-text-splitters==0.3.9
+neo4j==5.28.2
+pandas==2.3.1
+pdfminer.six==20240706
+pycryptodome==3.23.0
+PyMuPDF==1.26.3
+PyPDF2==3.0.1
+python-dotenv==1.1.1
+python-magic==0.4.27
+scikit-learn==1.7.1
+tenacity==9.1.2
+unstructured==0.16.11
+unstructured-client==0.42.0
+unstructured-inference==0.8.1
+unstructured.pytesseract==0.3.15
+streamlit==1.47.1
+streamlit-agraph

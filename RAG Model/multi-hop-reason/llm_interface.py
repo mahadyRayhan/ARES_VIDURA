@@ -9,6 +9,8 @@ import google.generativeai as genai
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings # Using Langchain for OpenAI
 # Alternatively, for direct OpenAI API usage for embeddings:
 # import openai
+from PIL import Image
+import io
 
 import config # Import config for defaults
 
@@ -184,7 +186,7 @@ class LLMInterface:
         if self.use_llm_cache and cache_key in self.llm_cache:
              self.logger.debug(f"LLM cache HIT for provider '{self.llm_provider}'")
              self.llm_cache_hits += 1
-             return self.llm_cache[prompt]
+             return self.llm_cache[cache_key]
 
         self.logger.debug(f"Generating LLM response via '{self.llm_provider}' for prompt (length: {len(prompt)}): '{prompt[:200]}...'")
         start_time = time.time()
@@ -227,7 +229,7 @@ class LLMInterface:
             self.logger.debug(f"LLM generation ({self.llm_provider}) took {elapsed_time:.2f}s. Response length: {len(generated_text)}")
 
             if self.use_llm_cache:
-                 self.llm_cache[cache_key] = generated_text
+                 self.llm_cache[cache_key] = generated_text # Use 'cache_key' to save
             return generated_text
 
         except Exception as e:
@@ -245,3 +247,30 @@ class LLMInterface:
             "embedding_cache_hits": self.embedding_cache_hits,
             "llm_cache_hits": self.llm_cache_hits
         }
+    
+    def get_image_summary(self, image_bytes: bytes, prompt: str) -> str:
+        """
+        Uses a multi-modal LLM to generate a description of an image.
+        Currently implemented for Google Gemini.
+        """
+        if self.llm_provider != "google":
+            self.logger.warning("Image summarization is currently only implemented for the 'google' provider.")
+            return "Unsupported for this provider"
+
+        self.logger.debug("Generating summary for image...")
+        try:
+            image = Image.open(io.BytesIO(image_bytes))
+            
+            # Use the same generative model, it's multi-modal
+            response = self.google_generative_model.generate_content([prompt, image])
+
+            if hasattr(response, 'text') and response.text:
+                return response.text
+            else:
+                # Handle potential blocks or empty responses
+                self.logger.warning(f"Vision model did not return text. Response parts: {response.parts}")
+                return "Could not generate a summary for the image."
+
+        except Exception as e:
+            self.logger.exception(f"Exception during image summarization: {e}")
+            return f"LLM_ERROR: Failed to process image ({e})"
