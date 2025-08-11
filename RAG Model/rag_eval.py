@@ -3,6 +3,7 @@ from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from rouge_score import rouge_scorer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from collections import Counter
 import json
 import numpy as np # For calculating averages
 
@@ -43,6 +44,24 @@ def compute_cosine_similarity(reference, candidate):
         print(f"Warning: Cosine similarity ValueError. Reference: '{reference[:50]}...', Candidate: '{candidate[:50]}...'. Error: {e}. Returning 0.0")
         return 0.0
 
+def compute_f1(reference, candidate):
+    """Computes token-level F1 score between reference and candidate."""
+    ref_tokens = set(nltk.word_tokenize(reference.lower()))
+    cand_tokens = set(nltk.word_tokenize(candidate.lower()))
+    common = ref_tokens & cand_tokens
+
+    if not common:
+        return 0.0
+
+    precision = len(common) / len(cand_tokens) if cand_tokens else 0
+    recall = len(common) / len(ref_tokens) if ref_tokens else 0
+
+    if precision + recall == 0:
+        return 0.0
+
+    f1 = 2 * (precision * recall) / (precision + recall)
+    return f1
+
 def evaluate_answers(reference_answer_text, generated_answer_text, original_question_text=""):
     """
     Evaluates a reference answer against a generated answer.
@@ -54,17 +73,20 @@ def evaluate_answers(reference_answer_text, generated_answer_text, original_ques
         return {
             "bleu_answer": 0.0,
             "rouge_answer": {"rouge-1": 0.0, "rouge-2": 0.0, "rouge-L": 0.0},
-            "cosine_similarity_answer": 0.0
+            "cosine_similarity_answer": 0.0,
+            "f1_answer": 0.0
         }
 
     bleu_score = compute_bleu(reference_answer_text, generated_answer_text)
     rouge_scores = compute_rouge(reference_answer_text, generated_answer_text)
     cosine_sim_score = compute_cosine_similarity(reference_answer_text, generated_answer_text)
+    f1_score = compute_f1(reference_answer_text, generated_answer_text)
 
     return {
         "bleu_answer": bleu_score,
         "rouge_answer": rouge_scores, # This is a dict: {"rouge-1": ..., "rouge-2": ..., "rouge-L": ...}
-        "cosine_similarity_answer": cosine_sim_score
+        "cosine_similarity_answer": cosine_sim_score,
+        "f1_answer": f1_score
     }
 
 # --- Main Script ---
@@ -89,6 +111,7 @@ if __name__ == "__main__":
     rouge2_scores_list = []
     rougeL_scores_list = []
     cosine_scores_list = []
+    f1_scores_list = []
 
     if data_to_evaluate:
         for item_idx, item in enumerate(data_to_evaluate):
@@ -124,6 +147,8 @@ if __name__ == "__main__":
                     rouge2_scores_list.append(0.0)
                     rougeL_scores_list.append(0.0)
                 cosine_scores_list.append(scores["cosine_similarity_answer"])
+                f1_scores_list.append(scores.get("f1_answer", 0.0))
+
 
             except Exception as e:
                 print(f"Error evaluating item {item_idx+1} ('{original_question}'): {e}")
@@ -133,6 +158,7 @@ if __name__ == "__main__":
                 rouge2_scores_list.append(0.0)
                 rougeL_scores_list.append(0.0)
                 cosine_scores_list.append(0.0)
+                f1_scores_list.append(0.0)
 
     # --- Print Individual Results (Optional) ---
     if not all_evaluations_data:
@@ -158,6 +184,8 @@ if __name__ == "__main__":
         avg_rouge2 = np.mean(rouge2_scores_list)
         avg_rougeL = np.mean(rougeL_scores_list)
         avg_cosine = np.mean(cosine_scores_list)
+        avg_f1 = np.mean(f1_scores_list)
+
 
         # Helper function to format the list of scores
         def format_score_list(score_list):
@@ -169,6 +197,8 @@ if __name__ == "__main__":
         print(f"Average ROUGE-2 F1 Score:   {avg_rouge2:.4f} {format_score_list(rouge2_scores_list)}")
         print(f"Average ROUGE-L F1 Score:   {avg_rougeL:.4f} {format_score_list(rougeL_scores_list)}")
         print(f"Average Cosine Similarity:  {avg_cosine:.4f} {format_score_list(cosine_scores_list)}")
+        print(f"Average F1 Score:             {avg_f1:.4f} {format_score_list(f1_scores_list)}")
+
     else:
         print("\nNo scores were available to calculate aggregated results.")
 

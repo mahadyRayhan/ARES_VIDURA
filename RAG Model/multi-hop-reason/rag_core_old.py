@@ -103,8 +103,9 @@ class CNTRagSystem:
             Alternative Queries (for a novice):"""
         elif self.user_type == "advanced":
             expansion_prompt = f"""You are an expert search query generator assisting an advanced researcher in Carbon Nanotubes (CNTs).
-            Generate {num_expansions} alternative search queries. Each should: 
-            Preserve the scientific intent of the original question. Emphasize variables such as temperature, pressure, catalyst composition/thickness, and synthesis conditions. Use domain-specific terminology suitable for advanced literature to retrieve in-depth scientific documents.
+            Generate {num_expansions} alternative search queries for the following original question.
+            The queries should emphasize critical experimental conditions (exact temperature, catalyst details, thickness), detailed growth trends, stability, structural quality, and nuances of CNT synthesis and properties.
+            Use precise, technical phrasing to retrieve in-depth scientific documents.
             {common_instructions}
             Alternative Queries (for an advanced researcher):"""
         else: # Default (should not happen due to __init__ check)
@@ -181,165 +182,28 @@ class CNTRagSystem:
         #     {common_reasoning_critical}
         #     Decision:"""
         # elif self.user_type == "advanced":
-
-        #---ADVANCED----
-        prompt = f"""You are a reasoning engine in a Retrieval-Augmented Generation (RAG) system that assists *advanced researchers* in Carbon Nanotube (CNT) research. Your role is to critically evaluate if the retrieved context provides a **complete, precise, and technically rich answer** to the given question.
-
+        prompt = f"""You are an expert reasoning engine for a RAG system assisting an *advanced researcher* with questions about Carbon Nanotube (CNT) research.
+        The user is looking for detailed technical insights, numerical trends, and potential optimizations.
         {common_reasoning_intro}
-
-        Task Objective:
-        Your primary job is to **evaluate whether the Accumulated Context fully and technically answers the Original Question**. The user expects detailed insights with technical depth, quantitative data, and possible experimental implications.
-
         Instructions:
-        Carefully read the context and reason as follows:
+        1. Analyze if the Accumulated Context *comprehensively and technically* answers the Original Question for an advanced researcher.
+            Focus on key findings related to CNT synthesis, including the influence of factors like temperature (e.g., 604°C), catalyst type (e.g., Fe or Aluminum Oxide), and thickness (e.g., 0.61 µm) on growth rates, stability, and maximum height.
+            Look for advanced observations such as growth stabilization times (e.g., 1118 seconds), numerical trends, and any anomalies in the data.
+        2. Consider the search queries used so far.
+        3. Decide the single next action:
+            a. If context fully and technically answers: Output *exactly*: ANSWER_COMPLETE
+            b. If context is insufficient or more depth is needed for an advanced user, identify the *single most critical missing piece of technical information* or *next logical sub-question for deeper analysis*.
+                Formulate a *concise, specific scientific search query* for this, potentially focusing on optimizations or experimental modifications to refine CNT synthesis.
+                Output *exactly* in this format: NEXT_QUERY: [Your concise technical query here]
+            c. If retrieval errors occurred or context is irrelevant, output: ANSWER_COMPLETE
 
-        1. **Does the context sufficiently answer the question?**
-        - Look for quantitative results (e.g., growth rates, defect densities, lifetimes, temperatures like 604°C, catalyst thickness like 0.61 µm).
-        - Identify advanced experimental findings (e.g., stabilization times like 1118 seconds, effects of catalyst types like Fe or Al₂O₃).
-        - Check if trade-offs, optimization methods, or comparative data are presented.
-        - Note if there's any mention of mechanisms (e.g., chirality formation, defect healing) and their implications.
-
-        2. **What is missing?**
-        - If key numeric trends, models, comparative experiments, or synthesis variables are **not present or underdeveloped**, this indicates **incompleteness**.
-        - Identify the **most critical missing technical insight** or **next sub-question** for continued search.
-
-        3. **Assess prior search steps.**
-        - If relevant queries have been tried but retrieval failed or returned noise, recognize the issue.
-
-        Decision Guide:
-
-        - If the context is **technically complete** and well-aligned with the original question, respond:
-        `ANSWER_COMPLETE`
-
-        - If the context is **missing important details or depth**, output the most urgent technical follow-up query in this format:
-        `NEXT_QUERY: [Your concise, domain-specific scientific query here]`
-
-        - If the context is **irrelevant or retrieval failed**, output:
-        `ANSWER_COMPLETE`
-
-       Reasoning Template (Internal Thinking Before Decision):
-
-        1. **Core Need**: What is the user (advanced researcher) really trying to find? What would be the ideal form of an answer?
-        2. **Evidence Check**: List 2–3 specific snippets from the context that support or fail to support this answer.
-        3. **Gap Analysis**: What specific numerical model, trend, or parameter comparison is missing?
-        4. **Search Guidance**: What should be retrieved next that would fill this gap?
-
+        Reasoning Steps (Think Internally before deciding):
+        1. What core technical information, numerical data, or optimization insights are needed for an advanced user regarding the Original Question?
+        2. Does the Accumulated Context contain this information with sufficient depth and detail? List supporting evidence/snippets.
+        3. Are there specific, critical technical gaps or areas for further detailed exploration? If so, what are they?
+        4. Based on these gaps, what is the most effective *next* technical query to deepen the understanding or explore optimizations, or is the answer complete?
         {common_reasoning_critical}
-        Decision:
-        """
-
-
-
-
-
-
-
-
-        # prompt = f"""You are an expert reasoning engine for a Retrieval-Augmented Generation (RAG) system assisting an *advanced researcher* with questions about Carbon Nanotube (CNT) research.
-        # The user is looking for detailed technical insights, quantitative patterns, and potential optimizations. 
-        # The user seeks a deep understanding based *only* on the *Accumulated Context* provided, in relation to the *Original Question*.
-
-        # {common_reasoning_intro}    
-        # Instructions:
-        # 1. **Extract Key Scientific Parameters** from the Original Question:
-        #     a.These may include temperature (e.g., 604°C), catalyst type (e.g., Fe, Al₂O₃), catalyst thickness (e.g., 0.61 µm), duration (e.g., 1118 seconds), chirality, growth rate, diameter, defect density, synthesis method (e.g., thermal vs. plasma-enhanced CVD), or functionalization etc.
-
-        # 2. **Assess Context Coverage and Depth**:
-        #     a. Evaluate whether each parameter is covered.
-        #     b. Use this logic:
-        #         i.[COVERED]     = Technically explained with quantitative or experimental details  
-        #         ii. [PARTIAL]     = Mentioned but lacks precision or depth  
-        #         iii. [MISSING]     = Not covered at all
-        # 3.  **Check for Contradictions or Gaps**:
-        #     a. Identify inconsistent trends, missing dependencies (e.g., catalyst mentioned but no growth behavior shown), or vague descriptions.
-
-        # 4. **Assess Confidence**:
-        #     a. HIGH = Strong, consistent, supported  
-        #     b. MEDIUM = Some support but gaps remain  
-        #     c. LOW = Missing key information, weak trends
-        
-        # 5. **Decide Next Action**:
-        #     a. If the context *comprehensively and technically* answers the Original Question:  
-        #         → Output exactly: `ANSWER_COMPLETE`
-            
-        #     b. If context lacks depth or critical parameters:  
-        #         → Identify the *most critical missing or underexplored element*  
-        #         → Formulate a precise, technical follow-up query in this format:  
-        #             `NEXT_QUERY: [your query]`
-            
-        #         Suggested query styles:
-        #         - Effect of [parameter] on [property] in CNT synthesis  
-        #         - Comparison of [technique A] vs. [technique B] under [condition]  
-        #         - Optimal [parameter] to maximize [target metric] in [CNT type]
-
-        #     c. If the context is irrelevant or retrieval failed:  
-        #         → Output: `ANSWER_COMPLETE`
-
-
-        # Reasoning Steps (Think Internally before deciding):
-        # 1. What core technical information, numerical data, or optimization insights are needed for an advanced user regarding the Original Question?
-        # 2. Does the Accumulated Context contain this information with sufficient depth and detail? List supporting evidence/snippets.
-        # 3. Are there specific, critical technical gaps or areas for further detailed exploration? If so, what are they?
-        # 4. Based on these gaps, what is the most effective *next* technical query to deepen the understanding or explore optimizations, or is the answer complete?
-        # {common_reasoning_critical}
-        # Decision:"""
-
-        #---NOVICE-----
-        # prompt = f"""
-        # You are a reasoning engine for a Retrieval-Augmented Generation (RAG) system assisting a *novice user* in understanding Carbon Nanotube (CNT) research.
-
-        # Your goal is to determine whether the currently retrieved information is explained clearly enough for someone who is new to the topic, or whether a follow-up query is needed to provide simpler or more foundational explanations.
-
-        # {common_reasoning_intro}
-
-        # Instructions:
-
-        # 1. **Identify Key Concepts from the Original Question**  
-        # Examples include:
-        # - Basic terms like "chirality", "diameter", "growth", or "catalyst"
-        # - General conditions like temperature, duration, or type of synthesis
-        # - Intended properties like strength, conductivity, or flexibility
-
-        # 2. **Check Whether These Concepts Are Explained Clearly in the Context**  
-        # Use the following legend:
-        # - [CLEAR]: Well-explained in simple terms, with examples or plain definitions  
-        # - [VAGUE]: Mentioned, but still difficult to understand or too technical  
-        # - [MISSING]: Not explained at all  
-
-        # 3. **Assess if the Context is Understandable for a Beginner**  
-        # - Are unfamiliar terms defined?  
-        # - Are there examples or analogies?  
-        # - Would a beginner likely understand the relationship between the variables and outcomes?
-
-        # 4. **Internally Reflect Before Deciding**  
-        # - What key concepts or explanations are missing or unclear?  
-        # - Is any important information buried in jargon or too condensed?  
-        # - What simple follow-up query would retrieve better explanations?
-
-        # 5. **Decide the Next Action**
-        # - If the context provides a clear, understandable answer:  
-        #     → Output: `ANSWER_COMPLETE`
-
-        # - If the context is too advanced, unclear, or lacks explanation:  
-        #     → Output: `NEXT_QUERY: [your simplified query for retrieval]`
-
-        #     Suggested formats:
-        #     - What is [concept] in CNTs?
-        #     - How does [parameter] affect [property] in simple terms?
-        #     - Explanation of [CNT topic] for beginners
-
-        # - If the context is off-topic or empty:  
-        #     → Output: `ANSWER_COMPLETE`
-        
-        #  Reasoning Steps (Think Internally before deciding):
-        # 1. What core technical information, numerical data, or optimization insights are needed for an advanced user regarding the Original Question?
-        # 2. Does the Accumulated Context contain this information with sufficient depth and detail? List supporting evidence/snippets.
-        # 3. Are there specific, critical technical gaps or areas for further detailed exploration? If so, what are they?
-        # 4. Based on these gaps, what is the most effective *next* technical query to deepen the understanding or explore optimizations, or is the answer complete?
-        # {common_reasoning_critical}
-        # Decision:"""
-
-
+        Decision:"""
         # else: # Default
         #     self.logger.error("User type not properly set for reasoning, using default prompt.") # Should not happen
         #     prompt = f"""You are a precise reasoning engine for a RAG system answering questions about Carbon Nanotube (CNT) research papers and data.
@@ -521,62 +385,24 @@ class CNTRagSystem:
         #     Final Synthesized Answer (simple and clear for a novice, based ONLY on context):"""
         # elif self.user_type == "advanced":
             # NEW ADVANCED PROMPT INSPIRED BY YOUR AgenticRAG EXAMPLE
+        prompt = f"""You are an experienced researcher synthesizing a detailed technical analysis for an advanced colleague on Carbon Nanotubes (CNTs).
+        The user seeks a deep understanding based *only* on the *Accumulated Context* provided, in relation to the *Original Question*.
 
-        prompt = f"""You are an expert Carbon Nanotube (CNT) researcher synthesizing a precise, technical answer to the following question using *only* the Accumulated Context provided.
+        {common_final_answer_intro} # This includes Original Question and Accumulated Context.
 
-        {common_final_answer_intro}
+        As an experienced researcher, your response should:
+        1.  **Identify Key Influencing Parameters**: From the Original Question and, more importantly, from the Accumulated Context, identify the critical experimental conditions (e.g., temperature settings, catalyst composition/thickness), material characteristics (e.g., diameter, chirality, defect density), or process details (e.g., functionalization methods, synthesis techniques like CVD) that are discussed in relation to the query.
+        2.  **Provide In-depth Analysis based on these identified parameters and the context**:
+            a.  **Technical Explanation of Interplay**: Deliver a comprehensive technical explanation of the interplay between these identified parameters. Emphasize the underlying mechanisms (as described in the context) that affect CNT growth, stability, final properties (e.g., mechanical, electronic, optical), functionalization outcomes, or scalability.
+            b.  **Numerical Insights and Trends**: If the context provides specific numerical data, quantitative trends, or correlations (e.g., catalyst thickness vs. growth kinetics, optimal temperature ranges for specific outcomes), discuss these in-depth. Include any theoretical or experimental justifications for these trends *if they are mentioned in the context*.
+            c.  **Theory-Based Aspects**: For questions that are primarily theoretical, discuss underlying mechanisms and material properties as detailed in the context, referencing scientific principles or models *if explicitly stated in the context*.
+            d.  **Practical/Experimental Aspects**: For practical or experimental queries, discuss relevant experimental observations, potential adjustments, or challenges as presented in the context.
+        3.  **Comprehensive and Integrated Response**: Ensure your answer is exhaustive yet focused, integrating theoretical concepts with practical implications as supported by the context. Highlight both foundational knowledge and specific findings present in the provided materials.
+        4.  **Strict Adherence to Context**: Your entire answer MUST be derived solely from the Accumulated Context. Do NOT introduce external knowledge, assumptions, or information not explicitly present.
+        5.  **Handling Insufficient Context for Detailed Analysis**: If the Accumulated Context lacks the specific details to perform the requested in-depth analysis for key aspects of the Original Question, clearly state what specific information is missing from the provided texts. For instance: "While the context mentions [general topic], it does not provide specific data on [e.g., the quantitative impact of catalyst X on chirality distribution, detailed kinetic models for functionalization Y, or a comparative analysis of defect types on Z property] required for a full advanced analysis of [aspect of original question]."
+        6.  **Structure**: Present the answer logically and technically. Do NOT refer to the search process or source markers (`[Source: ...]`).
 
-        ---
-
-        Instructions:
-        1. **Focus on Alignment with Reference Style and Length**  
-        - Use technical language but avoid excessive elaboration.
-        - Match the tone, structure, and level of detail typical of a well-written research abstract or summary.
-        - Limit your response to **1–2 paragraphs**, as this improves alignment with evaluation reference answers.
-
-        2. **Answer Synthesis Requirements**
-        - Use only the information in the context.
-        - Emphasize key findings, mechanisms, and numerical values exactly as presented.
-        - **Avoid speculative phrasing** or going beyond what is explicitly stated.
-        - Reuse phrasing and terminology from the context when appropriate, especially scientific terms and sentence structures.
-
-        3. **If information is missing**, indicate that precisely:
-        > “The context does not include [specific element], which is necessary for a full technical comparison.”
-
-        ---
-
-        Output Requirements:
-        - Avoid meta commentary (do not mention 'the context says' or 'the documents state').
-        - Do not include citations, bullet points, or headings unless the reference format does.
-        - Do not explain your reasoning — just provide the answer.
-
-        ---
-        Final Synthesized Answer (Concise, Technical, Matched to Reference Format):
-        """
-
-
-
-
-        # prompt = f"""You are an experienced researcher synthesizing a detailed technical analysis for an advanced colleague on Carbon Nanotubes (CNTs).
-        # The user seeks a deep understanding based *only* on the *Accumulated Context* provided, in relation to the *Original Question*.
-
-        # {common_final_answer_intro} # This includes Original Question and Accumulated Context.
-
-        # As an experienced researcher, your response should:
-        # 1.  **Identify Key Influencing Parameters**: From the Original Question and, more importantly, from the Accumulated Context, identify the critical experimental conditions (e.g., temperature settings, catalyst composition/thickness), material characteristics (e.g., diameter, chirality, defect density), or process details (e.g., functionalization methods, synthesis techniques like CVD) that are discussed in relation to the query.
-        # 2.  **Provide In-depth Analysis based on these identified parameters and the context**:
-        #     a.  **Technical Explanation of Interplay**: Deliver a comprehensive technical explanation of the interplay between these identified parameters. Emphasize the underlying mechanisms (as described in the context) that affect CNT growth, stability, final properties (e.g., mechanical, electronic, optical), functionalization outcomes, or scalability.
-        #     b.  **Numerical Insights and Trends**: If the context provides specific numerical data, quantitative trends, or correlations (e.g., catalyst thickness vs. growth kinetics, optimal temperature ranges for specific outcomes), discuss these in-depth. Include any theoretical or experimental justifications for these trends *if they are mentioned in the context*.
-        #     c.  **Theory-Based Aspects**: For questions that are primarily theoretical, discuss underlying mechanisms and material properties as detailed in the context, referencing scientific principles or models *if explicitly stated in the context*.
-        #     d.  **Practical/Experimental Aspects**: For practical or experimental queries, discuss relevant experimental observations, potential adjustments, or challenges as presented in the context.
-        # 3.  **Comprehensive and Integrated Response**: Ensure your answer is exhaustive yet focused, integrating theoretical concepts with practical implications as supported by the context. Highlight both foundational knowledge and specific findings present in the provided materials.
-        # 4.  **Strict Adherence to Context**: Your entire answer MUST be derived solely from the Accumulated Context. Do NOT introduce external knowledge, assumptions, or information not explicitly present.
-        # 5.  **Handling Insufficient Context for Detailed Analysis**: If the Accumulated Context lacks the specific details to perform the requested in-depth analysis for key aspects of the Original Question, clearly state what specific information is missing from the provided texts. For instance: "While the context mentions [general topic], it does not provide specific data on [e.g., the quantitative impact of catalyst X on chirality distribution, detailed kinetic models for functionalization Y, or a comparative analysis of defect types on Z property] required for a full advanced analysis of [aspect of original question]."
-        # 6.  **Structure**: Present the answer logically and technically. Do NOT refer to the search process or source markers (`[Source: ...]`).
-
-        # Final Synthesized Answer (Detailed, Technical, Exhaustive based ONLY on context):"""
-        
-        
+        Final Synthesized Answer (Detailed, Technical, Exhaustive based ONLY on context):"""
         # else: # Default
         #     self.logger.error("User type not properly set for final answer, using default prompt.")
         #     # ... (original default prompt)

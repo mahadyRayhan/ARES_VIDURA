@@ -1,5 +1,5 @@
 How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?
 What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?
 How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?
-What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?",
+What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?
 What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?
