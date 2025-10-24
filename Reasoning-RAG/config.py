@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-load_dotenv('../../.env')
+load_dotenv('../.env')
 
 # --- API Configuration ---
 API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -32,11 +32,11 @@ DEFAULT_OPENAI_EMBEDDING_MODEL = "text-embedding-ada-002" # or "text-embedding-3
 
 # --- Default Paths ---
 DEFAULT_VECTOR_DB_PATH = "vector_db_cnt.csv"
-DEFAULT_DOCUMENTS_PATH_PATTERN = "../../DataSets/TEST_SET/*" # "CNT_Papers/*" # Example: 
+DEFAULT_DOCUMENTS_PATH_PATTERN = "../DataSets/TEST_SET/*" # "CNT_Papers/*" # Example: 
 DEFAULT_LOG_FILE_PATH = "cnt_rag.log"
 DEFAULT_FEEDBACK_DB_PATH = "cnt_feedback_history.csv"
 DEFAULT_GRAPH_DIR = "cnt_rag_graphs"
-DEFAULT_TEST_QUESTIONS_PATH = "test_questions.txt" # Path to test questions
+DEFAULT_TEST_QUESTIONS_PATH = "rag-eval/test_questions.txt" # Path to test questions
 
 # --- Default RAG Settings ---
 DEFAULT_VECTOR_DB_TYPE = "csv" # Options: "csv", "chroma", "inmemory"
