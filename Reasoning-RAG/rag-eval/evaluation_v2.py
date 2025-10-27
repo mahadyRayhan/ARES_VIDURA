@@ -18,7 +18,7 @@ import torch
 from dotenv import load_dotenv
 
 # Note: Adjust the path if your .env file is in a different location
-load_dotenv('../.env')
+load_dotenv('../../.env')
 
 # ==============================================================================
 # --- 1. SETUP & ONE-TIME LOADING ---
@@ -164,7 +164,7 @@ def generate_visualizations(quantitative_results, grader_results, config):
 # ==============================================================================
 if __name__ == '__main__':
     class Config:
-        EVALUATION_DATA_PATH = 'question_set/model-comp-adv.json'
+        EVALUATION_DATA_PATH = '../question_set/model-comp-adv.json'
         OUTPUT_DIR = 'evaluation_report'
         EXPERIMENT_NAME = "baseline_rag_performance"
 
