@@ -849,7 +849,11 @@ class CNTRagSystem:
                         unique_chunk_ids_in_context.add(chunk_id)
             elif retrieved_chunks:
                 reasoning_trace.append(f"Hop {hops_taken}: No new unique chunks added (duplicates/similar).")
-
+            # --- ADD THIS FIX ---
+            # If the retrieval found any chunks at all (new or duplicate), mark it as a success.
+            if retrieved_chunks:
+                retrieval_succeeded_this_hop = True
+            # --- END FIX ---
             full_context_for_reasoning = "\n\n==== CONTEXT FROM HOP/SUMMARY SEPARATOR ====\n\n".join(accumulated_context_list)
             
             action, value = self._reason_and_refine_query(
