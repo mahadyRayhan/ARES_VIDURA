@@ -18,6 +18,7 @@ if not API_KEY:
 # --- API Configuration ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") # Renamed for clarity
 OPENAI_API_KEY = os.getenv("GPT_API_KEY") # Add OpenAI API Key
+print('GOOGLE_API_KEY', GOOGLE_API_KEY)
 
 # --- Model IDs ---
 DEFAULT_GENERATIVE_LLM_PROVIDER = "google" # "google" or "openai"

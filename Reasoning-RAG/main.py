@@ -6,6 +6,7 @@ from typing import List
 
 # Import configuration and components
 import config # Ensure this imports your updated config.py
+import config_ablation as settings # <-- 1. IMPORT ABLATION SETTINGS
 from utils import setup_logging
 from llm_interface import LLMInterface # Ensure this imports your updated llm_interface.py
 from vector_store import get_vector_store, VectorStore
@@ -37,7 +38,7 @@ def run_test_query(rag_system: CNTRagSystem, question: str, index: int, user_typ
         max_hops=config.DEFAULT_MAX_HOPS,
         use_query_expansion=True,
         request_evaluation=True,
-        generate_graph=True
+        generate_graph=False
     )
 
     print("\n--- Final Answer ---")
@@ -172,10 +173,11 @@ if __name__ == "__main__":
             feedback_db_path=config.DEFAULT_FEEDBACK_DB_PATH,
             feedback_history=feedback_history,
             # user_type=user_type_setting, # Pass if CNTRagSystem uses it in __init__
-            graph_dir=config.DEFAULT_GRAPH_DIR,
-            max_context_tokens=config.MAX_CONTEXT_TOKENS,
-            char_to_token_ratio=config.CHAR_TO_TOKEN_RATIO,
-            similarity_threshold=config.SIMILARITY_THRESHOLD
+            use_knowledge_graph=settings.USE_KNOWLEDGE_GRAPH,
+            use_multi_hop=settings.USE_MULTI_HOP,
+            use_source_tagging=settings.USE_SOURCE_TAGGING,
+            use_proactive_suggestions=settings.USE_PROACTIVE_SUGGESTIONS,
+            use_llm_evaluation=settings.USE_LLM_EVALUATION
         )
         logger.info(f"CNTRagSystem Initialized (using LLM: {cnt_rag_system.llm_interface.llm_provider.upper()}).") # User type from CNTRagSystem if it stores it
 

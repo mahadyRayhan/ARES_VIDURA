@@ -101,14 +101,20 @@ def main():
 
     # --- 2. Define Ablation Configurations ---
     # Each dictionary key corresponds to a CNTRagSystem constructor argument.
+    
+    # configurations = {
+    #     "C0_Rigorous_Prompt": {"use_knowledge_graph": True, "use_multi_hop": True, "use_source_tagging": True, "use_proactive_suggestions": True, "use_llm_evaluation": True, "generate_graph": True, "reasoning_prompt_type": "RIGOROUS"},
+    #     "C1_Full_System":     {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": True, "reasoning_prompt_type": "EFFICIENT"},
+    #     "C2_No_KG":           {"use_knowledge_graph": False, "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"},
+    #     "C3_No_MultiHop":     {"use_knowledge_graph": True,  "use_multi_hop": False, "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"},
+    #     "C4_No_Suggestions":  {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": False, "use_llm_evaluation": True,  "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"},
+    #     "C5_No_LLMEval":      {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": False, "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"},
+    #     "C6_No_SrcTagging":   {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": False, "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"},
+    #     "C7_No_Graph":        {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"},
+    # }
+    
     configurations = {
-        "C1_Full_System":     {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": True},
-        "C2_No_KG":           {"use_knowledge_graph": False, "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False},
-        "C3_No_MultiHop":     {"use_knowledge_graph": True,  "use_multi_hop": False, "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False},
-        "C4_No_Suggestions":  {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": False, "use_llm_evaluation": True,  "generate_graph": False},
-        "C5_No_LLMEval":      {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": False, "generate_graph": False},
-        "C6_No_SrcTagging":   {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": False, "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False},
-        "C7_No_Graph":        {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": True,  "generate_graph": False},
+        "C1_Full_System":     {"use_knowledge_graph": True,  "use_multi_hop": True,  "use_source_tagging": True,  "use_proactive_suggestions": True,  "use_llm_evaluation": False,  "generate_graph": False, "reasoning_prompt_type": "EFFICIENT"}
     }
 
     # --- 3. Setup CSV for performance metrics and Directory for QA JSONs ---
@@ -123,7 +129,7 @@ def main():
         writer.writeheader()
     logger.info(f"Performance metrics will be saved to {results_filepath}")
 
-    qa_output_dir = "qa_outputs"
+    qa_output_dir = "ablation_qa_outputs"
     os.makedirs(qa_output_dir, exist_ok=True)
     logger.info(f"Q&A JSON files will be saved in the '{qa_output_dir}' directory.")
 

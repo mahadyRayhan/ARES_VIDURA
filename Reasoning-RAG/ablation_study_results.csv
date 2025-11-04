@@ -1,36 +1,8 @@
 config_name,question_id,question,execution_time_s,hops_taken,confidence_score,relevance_rating,faithfulness_rating,answer_length,num_sources
-C1_Full_System,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",11.6,1,0.75,3,5,2788,18
-C1_Full_System,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,25.15,4,0.75,4,4,5524,48
-C1_Full_System,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",24.55,5,0.5,3,5,5028,65
-C1_Full_System,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,9.24,1,0.9,5,5,3193,18
-C1_Full_System,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,13.7,1,0.85,5,5,5423,19
-C2_No_KG,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",10.27,1,0.85,4,4,3099,19
-C2_No_KG,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,9.45,1,0.75,4,4,2421,19
-C2_No_KG,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",16.65,5,0.75,3,5,2970,62
-C2_No_KG,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,13.54,1,0.9,5,5,5257,18
-C2_No_KG,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,14.73,1,0.85,5,4,6396,19
-C3_No_MultiHop,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",0.13,1,0.75,3,5,2788,18
-C3_No_MultiHop,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,10.6,1,0.85,4,4,3261,19
-C3_No_MultiHop,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",8.17,1,0.25,2,5,2617,20
-C3_No_MultiHop,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,0.11,1,0.9,5,5,3193,18
-C3_No_MultiHop,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,0.13,1,0.85,5,5,5423,19
-C4_No_Suggestions,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",0.06,1,0.75,3,5,2788,18
-C4_No_Suggestions,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,0.65,4,0.75,4,4,5524,48
-C4_No_Suggestions,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",0.9,5,0.5,3,5,5028,65
-C4_No_Suggestions,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,0.08,1,0.9,5,5,3193,18
-C4_No_Suggestions,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,0.11,1,0.85,5,5,5423,19
-C5_No_LLMEval,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",0.07,1,,,,2788,18
-C5_No_LLMEval,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,0.73,4,,,,5524,48
-C5_No_LLMEval,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",0.9,5,,,,5028,65
-C5_No_LLMEval,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,0.15,1,,,,3193,18
-C5_No_LLMEval,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,0.17,1,,,,5423,19
-C6_No_SrcTagging,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",5.42,1,0.95,5,,1764,18
-C6_No_SrcTagging,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,5.51,4,0.75,5,5,1627,48
-C6_No_SrcTagging,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",6.69,5,0.55,5,5,1826,65
-C6_No_SrcTagging,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,5.13,1,0.95,5,5,1415,18
-C6_No_SrcTagging,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,7.67,1,0.85,5,5,3721,19
-C7_No_Graph,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",0.1,1,0.75,3,5,2788,18
-C7_No_Graph,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,0.74,4,0.75,4,4,5524,48
-C7_No_Graph,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",0.92,5,0.5,3,5,5028,65
-C7_No_Graph,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,0.11,1,0.9,5,5,3193,18
-C7_No_Graph,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,0.14,1,0.85,5,5,5423,19
+C1_Full_System,1,"""How does the structural defect density in carbon nanotubes affect their mechanical properties and functionalization potential?",14.83,1,,,,2465,18
+C1_Full_System,2,What are the thermodynamic and kinetic considerations when synthesizing carbon nanotubes using fluidized bed chemical vapor deposition (CVD)?,29.92,4,,,,7539,43
+C1_Full_System,3,"How do different functionalization methods (e.g., amine vs. carboxyl) compare in modifying carbon nanotube properties for specific applications?",21.18,4,,,,1750,54
+C1_Full_System,4,What role does the diameter and chirality of single-walled carbon nanotubes (SWCNTs) play in their electronic and optical properties?,7.64,1,,,,3446,18
+C1_Full_System,5,What are the challenges in scaling up the production of defect-free carbon nanotubes with uniform properties for industrial applications?,17.59,1,,,,6937,19
+C1_Full_System,6,Compare the effectiveness of Iron (Fe) and Nickel (Ni) catalysts when using acetylene (C₂H₂) for the CVD synthesis of secondary multi-walled carbon nanotubes (MWCNTs) on vapor-grown carbon fibers (VGCFs).,19.71,1,,,,5358,20
+C1_Full_System,7,"For synthesizing vertically aligned SWCNT 'carpets' using an Iron (Fe) catalyst with acetylene, explain the role of adding a weak oxidant like water (H₂O). What is the optimal concentration to maximize growth height, and what is the underlying mechanism for its effectiveness?",17.88,1,,,,7373,20

@@ -1,28 +1,28 @@
 ################################################################################
 # --- AGGREGATED EVALUATION SCORES: C4_No_Suggestions ---
-# Items Evaluated: 5
+# Items Evaluated: 7
 ################################################################################
 
 --- Lexical Similarity (Keyword-Based) ---
-  BLEU Score                      : 0.0595 (Higher is better)
-  ROUGE-1 (Unigram Recall)        : 0.3091 (Higher is better)
-  ROUGE-2 (Bigram Recall)         : 0.1065 (Higher is better)
-  ROUGE-L (Longest Subsequence)   : 0.1622 (Higher is better)
-  TF-IDF Cosine Similarity        : 0.4373 (Higher is better)
+  BLEU Score                      : 0.0544 (Higher is better)
+  ROUGE-1 (Unigram Recall)        : 0.3026 (Higher is better)
+  ROUGE-2 (Bigram Recall)         : 0.0993 (Higher is better)
+  ROUGE-L (Longest Subsequence)   : 0.1652 (Higher is better)
+  TF-IDF Cosine Similarity        : 0.4214 (Higher is better)
 
 --- Semantic Similarity (Meaning-Based vs. Reference Answer) ---
-  BERTScore Precision             : 0.7710 (Higher is better, less hallucination)
-  BERTScore Recall                : 0.8475 (Higher is better, more complete)
-  BERTScore F1                    : 0.8073 (Higher is better, balanced P and R)
-  Sentence-T Cosine Similarity    : 0.7437 (Higher is better)
-  Sentence-T Dot Product          : 0.7437 (Higher is better, unnormalized)
+  BERTScore Precision             : 0.7717 (Higher is better, less hallucination)
+  BERTScore Recall                : 0.8502 (Higher is better, more complete)
+  BERTScore F1                    : 0.8090 (Higher is better, balanced P and R)
+  Sentence-T Cosine Similarity    : 0.7463 (Higher is better)
+  Sentence-T Dot Product          : 0.7463 (Higher is better, unnormalized)
 
 --- Relevance & Correctness (Meaning-Based vs. Original Question) ---
   Semantic Answer Similarity (SAS): nan (Higher is better)
 
 --- LLM-as-a-Grader Scores (1-5 Scale) ---
-  Avg. Correctness              : 4.4000 (Higher is better)
-  Avg. Completeness             : 2.6000 (Higher is better)
-  Avg. Conciseness              : 3.4000 (Higher is better)
+  Avg. Correctness              : 4.4286 (Higher is better)
+  Avg. Completeness             : 2.5714 (Higher is better)
+  Avg. Conciseness              : 3.2857 (Higher is better)
 
 ################################################################################

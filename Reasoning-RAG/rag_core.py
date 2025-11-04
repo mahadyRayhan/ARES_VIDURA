@@ -8,6 +8,7 @@ from difflib import SequenceMatcher
 
 # Import components
 import config
+import config_ablation
 from llm_interface import LLMInterface
 from vector_store import VectorStore
 from evaluation import evaluate_response, assess_answer_confidence, record_feedback # Assuming this has the correct signature
@@ -32,6 +33,7 @@ class CNTRagSystem:
                  use_source_tagging: bool = True,
                  use_proactive_suggestions: bool = True,
                  use_llm_evaluation: bool = True,
+                 reasoning_prompt_type: str = config_ablation.REASONING_PROMPT_TYPE, # <-- NEW ARG
                  user_type: str = "advanced",
                  graph_dir: str = config.DEFAULT_GRAPH_DIR,
                  max_context_tokens: int = config.MAX_CONTEXT_TOKENS,
@@ -73,10 +75,11 @@ class CNTRagSystem:
         self.use_source_tagging = use_source_tagging
         self.use_proactive_suggestions = use_proactive_suggestions
         self.use_llm_evaluation = use_llm_evaluation
+        self.reasoning_prompt_type = reasoning_prompt_type # <-- STORE NEW SETTING
         
         self.logger.info(f"RAG System Initialized with Settings: KG={self.use_knowledge_graph}, MultiHop={self.use_multi_hop}, "
                          f"SourceTagging={self.use_source_tagging}, Suggestions={self.use_proactive_suggestions}, "
-                         f"LLMEval={self.use_llm_evaluation}")
+                         f"LLMEval={self.use_llm_evaluation}, PromptType={self.reasoning_prompt_type}") # <-- UPDATED LOG
         # ================================================================
         # END OF THE FIX
         # ================================================================
@@ -193,50 +196,103 @@ class CNTRagSystem:
         return unique_queries
 
     def _reason_and_refine_query(self, original_query: str, accumulated_context: str, history: List[str], current_hop: int, retrieval_failed_last: bool = False) -> Tuple[str, str]:
-        """Uses the LLM to decide the next step, with a stronger bias towards completing the answer."""
-        self.logger.info(f"--- Hop {current_hop} Reasoning ---")
+        """Uses the LLM to decide the next step, with conditional prompt based on prompt type."""
+        self.logger.info(f"--- Hop {current_hop} Reasoning ({self.reasoning_prompt_type}) ---")
+        context_snippet = accumulated_context.strip()[:500]
+        self.logger.debug(f"Reasoning based on History: {' -> '.join(history)}")
         
-        # --- PROMPT RE-ENGINEERED FOR BETTER STOPPING BEHAVIOR ---
-        prompt = f"""You are a methodical reasoning engine for a scientific RAG system. Your primary goal is to determine if the Original Question can be comprehensively answered *now* with the Accumulated Context, or if one more targeted search is *absolutely necessary*.
+        # --- Common Prompt Components ---
+        common_reasoning_intro = f"""
+        Your SOLE task is to determine the *next action* based on the Original Question and the Accumulated Context retrieved so far.
 
         Original Question:
         "{original_query}"
 
         Accumulated Context (from previous search steps):
-        ---
-        {accumulated_context.strip() if accumulated_context.strip() else "No context has been retrieved yet."}
-        ---
+        --- START CONTEXT ---
+        {accumulated_context.strip() if accumulated_context.strip() else "No context retrieved yet."}
+        --- END CONTEXT ---
 
-        Search History (previous queries): {history}
+        Reasoning History (Previous search queries used):
+        --- START HISTORY ---
+        {', '.join(history) if history else "This is the first reasoning step."}
+        --- END HISTORY ---
+        """
+        
+        common_reasoning_critical = """
+        CRITICAL:
+        - Perform the reasoning steps above internally.
+        - Your final output MUST still be only ONE line: EITHER "ANSWER_COMPLETE" OR "NEXT_QUERY: [your query]".
+        - NO explanations in your output.
+        """
+        
+        # --- Prompt Selection Logic ---
+        if self.reasoning_prompt_type == "RIGOROUS":
+            # The Rigorous (V1) Prompt
+            prompt = f"""You are an expert reasoning engine for a RAG system assisting an *advanced researcher* with questions about Carbon Nanotube (CNT) research.
+            The user is looking for detailed technical insights, numerical trends, and potential optimizations.
+            {common_reasoning_intro}
+            Instructions:
+            1. Analyze if the Accumulated Context *comprehensively and technically* answers the Original Question for an advanced researcher.
+                Focus on key findings related to CNT synthesis, including the influence of factors like temperature (e.g., 604°C), catalyst type (e.g., Fe or Aluminum Oxide), and thickness (e.g., 0.61 µm) on growth rates, stability, and maximum height.
+                Look for advanced observations such as growth stabilization times (e.g., 1118 seconds), numerical trends, and any anomalies in the data.
+            2. Consider the search queries used so far.
+            3. Decide the single next action:
+                a. If context fully and technically answers: Output *exactly*: ANSWER_COMPLETE
+                b. If context is insufficient or more depth is needed for an advanced user, identify the *single most critical missing piece of technical information* or *next logical sub-question for deeper analysis*.
+                    Formulate a *concise, specific scientific search query* for this, potentially focusing on optimizations or experimental modifications to refine CNT synthesis.
+                    Output *exactly* in this format: NEXT_QUERY: [Your concise technical query here]
+                c. If retrieval errors occurred or context is irrelevant, output: ANSWER_COMPLETE
 
-        **Your Task: Analyze the context and decide on ONE of two actions.**
+            Reasoning Steps (Think Internally before deciding):
+            1. What core technical information, numerical data, or optimization insights are needed for an advanced user regarding the Original Question?
+            2. Does the Accumulated Context contain this information with sufficient depth and detail? List supporting evidence/snippets.
+            3. Are there specific, critical technical gaps or areas for further detailed exploration? If so, what are they?
+            4. Based on these gaps, what is the most effective *next* technical query to deepen the understanding or explore optimizations, or is the answer complete?
+            {common_reasoning_critical}
+            Decision:"""
 
-        **Action 1: ANSWER_COMPLETE**
-        You MUST choose this action if ANY of the following conditions are met:
-        - The context directly and sufficiently answers the original question.
-        - The context provides enough detail to form a reasonable, albeit not exhaustive, answer.
-        - The last few search queries seem to be retrieving repetitive or irrelevant information (diminishing returns).
-        - The context is empty or clearly unrelated to the question after the first hop.
-        If you choose this, your output MUST be the single line:
-        ANSWER_COMPLETE
+        else: # EFFICIENT (Default C1 Prompt)
+            prompt = f"""You are a methodical reasoning engine for a scientific RAG system. Your primary goal is to determine if the Original Question can be comprehensively answered *now* with the Accumulated Context, or if one more targeted search is *absolutely necessary*.
 
-        **Action 2: NEXT_QUERY**
-        You should ONLY choose this action if there is a *critical, well-defined gap* in the context that prevents a logical answer from being formed.
-        - The next query must be for a specific, missing piece of information. Do not ask broad, follow-up questions.
-        - Formulate a concise, targeted search query to fill this specific gap.
-        If you choose this, your output MUST be in the format:
-        NEXT_QUERY: [Your new, targeted search query here]
+            Original Question:
+            "{original_query}"
 
-        **CRITICAL INSTRUCTIONS:**
-        - Do NOT provide explanations or conversation.
-        - Your entire output must be ONLY ONE of the two specified action formats.
-        - Be critical. It is better to stop with a good-enough answer than to search endlessly for minor details.
+            Accumulated Context (from previous search steps):
+            ---
+            {accumulated_context.strip() if accumulated_context.strip() else "No context has been retrieved yet."}
+            ---
 
-        Decision:"""
+            Search History (previous queries): {history}
 
+            **Your Task: Analyze the context and decide on ONE of two actions.**
+
+            **Action 1: ANSWER_COMPLETE**
+            You MUST choose this action if ANY of the following conditions are met:
+            - The context directly and sufficiently answers the original question.
+            - The context provides enough detail to form a reasonable, albeit not exhaustive, answer.
+            - The last few search queries seem to be retrieving repetitive or irrelevant information (diminishing returns).
+            - The context is empty or clearly unrelated to the question after the first hop.
+            If you choose this, your output MUST be the single line:
+            ANSWER_COMPLETE
+
+            **Action 2: NEXT_QUERY**
+            You should ONLY choose this action if there is a *critical, well-defined gap* in the context that prevents a logical answer from being formed.
+            - The next query must be for a specific, missing piece of information. Do not ask broad, follow-up questions.
+            - Formulate a concise, targeted search query to fill this specific gap.
+            If you choose this, your output MUST be in the format:
+            NEXT_QUERY: [Your new, targeted search query here]
+
+            **CRITICAL INSTRUCTIONS:**
+            - Do NOT provide explanations or conversation.
+            - Your entire output must be ONLY ONE of the two specified action formats.
+            - Be critical. It is better to stop with a good-enough answer than to search endlessly for minor details.
+
+            Decision:"""
+        
         response_text = self.llm_interface.generate_response(prompt)
 
-        # The parsing logic below is robust and should remain the same.
+        # The robust parsing logic must be kept here:
         action = "ERROR"; value = f"LLM response parsing failed. Raw: '{response_text}'"
         if response_text.startswith("LLM_ERROR"):
             self.logger.error(f"Reasoning failed due to LLM error: {response_text}")
@@ -271,6 +327,7 @@ class CNTRagSystem:
                     value = ""
                     self.logger.warning(f"Unexpected reasoning response format: '{response_clean}'. Defaulting to ANSWER_COMPLETE.")
         return action, value
+    
     def get_chunk_by_id(self, chunk_id: str) -> Optional[Dict[str, Any]]:
         """Pass-through method to get a chunk by its ID from the vector store."""
         return self.vector_store.get_chunk_by_id(chunk_id)
