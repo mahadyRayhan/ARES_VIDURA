@@ -1,0 +1,5 @@
+What are the primary differences between single-walled (SWCNTs) and multi-walled carbon nanotubes (MWCNTs)?
+How does the functionalization of carbon nanotubes improve their properties?
+What are the advantages of using a fluidized bed chemical vapor deposition (CVD) setup for synthesizing carbon nanotubes?
+What factors influence the CO2 adsorption capacity of multi-walled carbon nanotubes (MWCNTs)?
+What are some common applications of carbon nanotubes and their composites?

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vis.js for graph visualization -->
+    <script type_model="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://unpkg.com/vis-network/standalone/umd/vis-network.min.css" rel="stylesheet" type_model="text/css" />
+
+    <style>
+        /* Variables */
+        :root {
+            --primary-color: #007bff;
+            --text-color-dark: #333;
+            --text-color-light: #555;
+            --card-bg-color: #fff;
+            --border-color: #eee;
+            --monitor-silver: #e5e5e5;
+            --monitor-black: #000;
+        }
+        /* ... (All other CSS styles are identical to the previous version) ... */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: var(--text-color-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 50px 20px;
+        }
+        .monitor-wrapper {
+            width: 90%;
+            max-width: 1200px;
+            position: relative;
+            filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.15));
+        }
+        .mac-monitor {
+            background-color: var(--monitor-black);
+            padding: 20px 20px 0 20px; 
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            z-index: 2;
+        }
+        .mac-monitor::before {
+            content: ""; position: absolute; top: 10px; left: 50%;
+            transform: translateX(-50%); width: 5px; height: 5px;
+            background-color: #333; border-radius: 50%; z-index: 10;
+        }
+        .mac-screen-content {
+            background-color: white; 
+            border-radius: 4px 4px 0 0;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            height: 70vh; 
+            max-height: 700px;
+        }
+        .mac-chin {
+            background-color: var(--monitor-silver);
+            border: 1px solid #d5d5d5;
+            height: 60px;
+            border-radius: 0 0 20px 20px;
+            position: relative;
+            margin-top: -10px;
+            z-index: 1;
+        }
+        .monitor-stand {
+            position: relative; margin: 0 auto; width: 70px;
+            height: 70px; background: linear-gradient(#d0d0d0, #b0b0b0);
+            margin-top: -50px; z-index: 0; border-radius: 10px 10px 0 0;
+        }
+        .monitor-stand::before {
+            content: ""; position: absolute; top: 40%; left: 50%;
+            transform: translateX(-50%) perspective(120px) rotateX(75deg); 
+            width: 260px; height: 100px;
+            background: linear-gradient(#e0e0e0, #c0c0c0);
+            border-radius: 10px; margin-top: 0; 
+        }
+        .container {
+            width: 100%; max-width: 1100px;
+            margin: 0 auto; padding: 0 20px;
+        }
+        .navbar {
+            padding: 14px 0; border-bottom: 1px solid var(--border-color);
+            background-color: #ffffff; width: 100%; flex-shrink: 0;
+        }
+        .navbar .container {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo {
+            font-size: 1.4em; font-weight: 700; color: var(--primary-color);
+        }
+        #chat-body {
+            flex-grow: 1; overflow-y: auto; padding: 20px;
+            background-color: #f8f9fa; display: flex;
+            flex-direction: column; gap: 12px;
+        }
+        .chat-message {
+            padding: 12px 18px; border-radius: 18px;
+            max-width: 75%; line-height: 1.5;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .chat-message.user {
+            background-color: #F1F3F5; color: #1F2937;
+            border-radius: 18px 18px 5px 18px; align-self: flex-end;
+        }
+        .chat-message.assistant {
+            background-color: #E6F0FF; color: #1F2937;
+            border-radius: 18px 18px 18px 5px; align-self: flex-start;
+        }
+        .chat-message.loading {
+            background-color: #E6F0FF; color: #555;
+            font-style: italic;
+        }
+        .chat-message.error {
+            background-color: #ffebee; color: #b71c1c;
+            border: 1px solid #e57373;
+            border-radius: 18px 18px 18px 5px; align-self: flex-start;
+        }
+        
+        /* --- THIS IS THE CHAT INPUT AREA (FOOTER) --- */
+        #chat-form-container {
+            padding: 18px 20px; border-top: 1px solid var(--border-color);
+            background-color: var(--card-bg-color); display: flex;
+            gap: 10px; flex-shrink: 0;
+        }
+        /* This is the new <form> element */
+        #chat-form {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        #chat-form input[type="text"] {
+            flex-grow: 1; border: 1px solid #CED4DA;
+            border-radius: 25px; padding: 12px 18px;
+            font-size: 1em; font-family: 'Inter', sans-serif;
+        }
+        #chat-form input[type="text"]:focus {
+            outline: none; border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+        #chat-form button {
+            background-color: var(--primary-color); color: white;
+            border: none; border-radius: 50%; width: 48px;
+            height: 48px; font-size: 1.2em; font-weight: 600;
+            cursor: pointer; transition: background-color 0.2s;
+            flex-shrink: 0; display: flex;
+            align-items: center; justify-content: center;
+        }
+        #chat-form button:hover { background-color: #005a8a; }
+
+        /* --- STYLES FOR RAG DETAILS (TABS) --- */
+        .details-expander {
+            margin-top: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #fcfcfc;
+        }
+        .details-header {
+            font-size: 0.9em; font-weight: 600; color: #555;
+            cursor: pointer; padding: 10px 12px;
+            background-color: #f1f3f5; border-radius: 8px 8px 0 0;
+            transition: background-color 0.2s;
+        }
+        .details-header:hover { background-color: #e9ecef; }
+        
+        /* Tab Navigation */
+        .details-tabs {
+            display: none; /* Hidden by default */
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 10px;
+        }
+        .tab-button {
+            padding: 8px 12px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+        }
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        /* Tab Content */
+        .details-content {
+            display: none; /* All panes hidden by default */
+            padding: 12px;
+            font-size: 0.85em;
+            background-color: #ffffff;
+            border-radius: 0 0 8px 8px;
+        }
+        .details-content.active {
+            display: block; /* Show active pane */
+        }
+        .details-content pre {
+            background-color: #f8f9fa; border: 1px solid #e0e0e0;
+            border-radius: 5px; padding: 10px; overflow-x: auto;
+            white-space: pre-wrap; word-wrap: break-word; max-height: 200px;
+        }
+        .details-content ul { list-style-type: none; padding-left: 0; }
+        .details-content li {
+            background-color: #f8f9fa; border: 1px solid #e0e0e0;
+            padding: 8px; border-radius: 5px; margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        /* Show Text Button */
+        .show-text-btn {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 4px 8px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .show-text-btn:hover { background-color: #f1f1f1; }
+        .chunk-text-container {
+            border-top: 1px solid #eee;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+        
+        /* Graph Modal Styles */
+        .graph-modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .graph-modal-content {
+            background-color: #fff;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 900px;
+            height: 80vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .graph-modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .graph-modal-header h3 { color: var(--primary-color); }
+        .graph-modal-close {
+            font-size: 1.5em; font-weight: 600;
+            color: #aaa; cursor: pointer; border: none; background: none;
+        }
+        .graph-modal-close:hover { color: #333; }
+        #graph-container {
+            width: 100%;
+            flex-grow: 1;
+            border-radius: 0 0 10px 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="monitor-wrapper">
+        <div class="mac-monitor">
+            <div class="mac-screen-content">
+                
+                <header class="navbar">
+                    <div class="container">
+                        <div class="logo">CNT Research Assistant</div>
+                    </div>
+                </header>
+
+                <main id="chat-body">
+                    <div class="chat-message assistant">
+                        Hello! I am your CNT Research Assistant. How can I help you today?
+                    </div>
+                </main>
+
+                <!-- 
+                  FIX: The <form> tag is now wrapping the input and button.
+                  The <footer> is just a container.
+                -->
+                <footer id="chat-form-container">
+                    <form id="chat-form">
+                        <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+                        <button type="submit" id="send-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-send"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </form>
+                </footer>
+
+            </div>
+        </div>
+        <div class="mac-chin"></div>
+        <div class="monitor-stand"></div>
+    </div>
+    
+    <script>
+        // --- CHATBOT JAVASCRIPT (Connected to Flask Backend) ---
+
+        // --- FIX: Get the <form> element, not the <footer> ---
+        const chatForm = document.getElementById('chat-form');
+        
+        const chatBody = document.getElementById('chat-body');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-btn');
+
+        // This array will hold the full chat history for context
+        let chatHistory = [
+            { role: "assistant", content: "Hello! I am your CNT Research Assistant. How can I help you today?" }
+        ];
+
+        // --- FIX: This event listener will now work correctly ---
+        chatForm.addEventListener('submit', handleFormSubmit);
+
+        async function handleFormSubmit(e) {
+            e.preventDefault(); // This is crucial
+            const userInput = chatInput.value.trim();
+            if (!userInput) return;
+
+            // Disable form
+            chatInput.disabled = true;
+            sendButton.disabled = true;
+
+            // Add user message to UI
+            addMessageToUI(userInput, 'user');
+            // Add user message to history
+            chatHistory.push({ role: "user", content: userInput });
+
+            // Clear input
+            chatInput.value = '';
+
+            // Create placeholder for assistant response
+            const assistantMessageElem = addMessageToUI('...', 'assistant', true);
+
+            // --- Call the Flask Backend ---
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: userInput,
+                        history: chatHistory
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || `HTTP error! status: ${response.status}`);
+                }
+
+                // --- Process the streaming response ---
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                let finalAnswer = '';
+                let finalSuggestions = '';
+                let finalSources = [];
+                let finalTrace = [];
+                let finalGraphData = null;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+
+                    // Process all complete lines except the last (which might be partial)
+                    for (let i = 0; i < lines.length - 1; i++) {
+                        const line = lines[i];
+                        if (line.trim() === '') continue;
+
+                        try {
+                            const event = JSON.parse(line);
+                            
+                            if (event.event === "trace") {
+                                finalTrace.push(event.data);
+                            } 
+                            else if (event.event === "final_answer") {
+                                finalAnswer = event.data;
+                                // Use .textContent to avoid HTML injection issues
+                                assistantMessageElem.textContent = finalAnswer;
+                            } 
+                            else if (event.event === "suggestions") {
+                                finalSuggestions = event.data;
+                                assistantMessageElem.textContent = finalAnswer + finalSuggestions;
+                            } 
+                            else if (event.event === "sources") {
+                                finalSources = event.data;
+                            }
+                            else if (event.event === "graph_data") {
+                                finalGraphData = event.data;
+                                console.log("Received graph data:", finalGraphData);
+                            }
+                            else if (event.event === "error") {
+                                throw new Error(event.data);
+                            }
+                            
+                            scrollToBottom();
+
+                        } catch (e) {
+                            console.warn('Error parsing JSON line:', e, 'Line:', line);
+                        }
+                    }
+                    // Keep the last partial line in the buffer
+                    buffer = lines[lines.length - 1];
+                }
+
+                // Stream finished
+                assistantMessageElem.classList.remove('loading');
+                const finalContent = finalAnswer + finalSuggestions;
+                assistantMessageElem.textContent = finalContent; // Set final text
+
+                // Add RAG details expander
+                addDetailsExpander(assistantMessageElem, {
+                    sources: finalSources,
+                    reasoning: finalTrace.join('\n'),
+                    graphData: finalGraphData
+                });
+                
+                // Add the final, complete response to history
+                chatHistory.push({ 
+                    role: "assistant", 
+                    content: finalContent,
+                    sources: finalSources,
+                    reasoning: finalTrace.join('\n'),
+                    graphData: finalGraphData
+                });
+
+            } catch (error) {
+                console.error('Chat error:', error);
+                assistantMessageElem.textContent = `Sorry, an error occurred: ${error.message}`;
+                assistantMessageElem.classList.remove('loading');
+                assistantMessageElem.classList.add('error');
+            } finally {
+                // Re-enable form
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        /**
+         * Adds a new message to the chat body UI
+         */
+        function addMessageToUI(text, role, isLoading = false) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', role);
+            if (isLoading) {
+                messageElement.classList.add('loading');
+            }
+            messageElement.textContent = text;
+            chatBody.appendChild(messageElement);
+            scrollToBottom();
+            return messageElement;
+        }
+
+        /**
+         * Scrolls the chat body to the bottom
+         */
+        function scrollToBottom() {
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        /**
+         * Adds the RAG details expander to an assistant message
+         */
+        function addDetailsExpander(messageElement, details) {
+            const { sources, reasoning, graphData } = details;
+            
+            if (!sources?.length && !reasoning && !graphData) {
+                return; // No details to show
+            }
+
+            const expander = document.createElement('div');
+            expander.className = 'details-expander';
+
+            const header = document.createElement('div');
+            header.className = 'details-header';
+            header.textContent = 'Show RAG Details ⚙️';
+            
+            const tabContainer = document.createElement('div');
+            tabContainer.className = 'details-tabs';
+
+            const contentContainer = document.createElement('div');
+            
+            // --- Tab Switching Logic ---
+            const createTab = (id, title, contentElem) => {
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab-button';
+                tabButton.textContent = title;
+                tabButton.dataset.tabId = id;
+                
+                contentElem.className = 'details-content';
+                contentElem.id = id;
+                
+                tabButton.onclick = () => {
+                    // Deactivate all
+                    tabContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    contentContainer.querySelectorAll('.details-content').forEach(c => c.style.display = 'none');
+                    // Activate current
+                    tabButton.classList.add('active');
+                    contentElem.style.display = 'block';
+                };
+                
+                tabContainer.appendChild(tabButton);
+                contentContainer.appendChild(contentElem);
+            };
+
+            // --- 1. Sources Tab ---
+            if (sources?.length) {
+                const sourcesContent = document.createElement('div');
+                const ul = document.createElement('ul');
+                sources.forEach((source, i) => {
+                    const li = document.createElement('li');
+                    const textDiv = document.createElement('div');
+                    textDiv.innerHTML = `<strong>Source ${i+1}:</strong> <em>${source.document_name || 'N/A'}</em> (Page: ${source.page_number || 'N/A'})`;
+                    
+                    const btn = document.createElement('button');
+                    btn.className = 'show-text-btn';
+                    btn.textContent = 'Text';
+                    // Pass a unique ID for the text container
+                    const textContainerId = `chunk-text-${Date.now()}-${i}`;
+                    btn.onclick = () => fetchChunkText(source.chunk_id, li, textContainerId);
+                    
+                    li.appendChild(textDiv);
+                    li.appendChild(btn);
+                    ul.appendChild(li);
+                });
+                sourcesContent.appendChild(ul);
+                createTab(`sources-${Date.now()}`, `🔬 Sources (${sources.length})`, sourcesContent);
+            }
+
+            // --- 2. Reasoning Tab ---
+            if (reasoning) {
+                const reasoningContent = document.createElement('div');
+                const pre = document.createElement('pre');
+                pre.textContent = reasoning;
+                reasoningContent.appendChild(pre);
+                createTab(`reasoning-${Date.now()}`, '🧠 Reasoning', reasoningContent);
+            }
+
+            // --- 3. Flow Tab ---
+            if (graphData) {
+                const flowContent = document.createElement('div');
+                const btn = document.createElement('button');
+                btn.className = 'show-text-btn'; // Re-use style
+                btn.textContent = 'Launch Interactive Graph 🚀';
+                btn.style.backgroundColor = 'var(--primary-color)';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+                btn.onclick = () => showGraphModal(graphData);
+                flowContent.appendChild(btn);
+                createTab(`flow-${Date.now()}`, '📈 Flow', flowContent);
+            }
+
+            // Toggle logic
+            header.onclick = () => {
+                const isVisible = tabContainer.style.display === 'flex';
+                tabContainer.style.display = isVisible ? 'none' : 'flex';
+                // Hide all content panes when collapsing
+                if (isVisible) {
+                    contentContainer.querySelectorAll('.details-content').forEach(c => c.style.display = 'none');
+                } else {
+                    // Show the first tab's content when expanding
+                    const firstTab = tabContainer.querySelector('.tab-button');
+                    if(firstTab) {
+                        firstTab.click();
+                    }
+                }
+                header.textContent = isVisible ? 'Show RAG Details ⚙️' : 'Hide RAG Details ⚙️';
+            };
+
+            expander.appendChild(header);
+            expander.appendChild(tabContainer);
+            expander.appendChild(contentContainer);
+            messageElement.appendChild(expander);
+        }
+        
+        /**
+         * Fetches and displays chunk text
+         */
+        async function fetchChunkText(chunkId, listItemElement, containerId) {
+            // Check if text is already displayed
+            const existingContainer = document.getElementById(containerId);
+            if (existingContainer) {
+                existingContainer.remove();
+                return;
+            }
+
+            const container = document.createElement('div');
+            container.className = 'chunk-text-container';
+            container.id = containerId; // Assign unique ID
+            container.textContent = 'Loading text...';
+            listItemElement.appendChild(container);
+
+            try {
+                const response = await fetch(`/get_chunk/${chunkId}`);
+                if (!response.ok) throw new Error('Chunk not found');
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                const pre = document.createElement('pre');
+                pre.textContent = data.chunk_text;
+                container.textContent = ''; // Clear 'Loading text...'
+                container.appendChild(pre);
+
+            } catch (error) {
+                console.error('Error fetching chunk:', error);
+                container.textContent = `Error: ${error.message}`;
+                container.style.color = 'red';
+            }
+        }
+
+        /**
+         * Shows the graph modal
+         */
+        function showGraphModal(graphData) {
+            // 1. Create Modal Overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'graph-modal-overlay';
+            overlay.onclick = () => overlay.remove(); // Close on click outside
+
+            // 2. Create Modal Content
+            const content = document.createElement('div');
+            content.className = 'graph-modal-content';
+            content.onclick = (e) => e.stopPropagation(); // Prevent closing on click inside
+
+            // 3. Create Header
+            const header = document.createElement('div');
+            header.className = 'graph-modal-header';
+            header.innerHTML = '<h3>📈 RAG Flow Visualization</h3>';
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'graph-modal-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = () => overlay.remove();
+            header.appendChild(closeBtn);
+
+            // 4. Create Graph Container
+            const graphContainer = document.createElement('div');
+            const graphContainerId = `graph-container-${Date.now()}`; // Unique ID
+            graphContainer.id = graphContainerId;
+            graphContainer.style.width = '100%';
+            graphContainer.style.flexGrow = '1';
+
+            // 5. Assemble Modal
+            content.appendChild(header);
+            content.appendChild(graphContainer);
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+
+            // 6. Initialize Vis.js Network
+            // We must wait a brief moment for the DOM to update
+            setTimeout(() => {
+                try {
+                    const container = document.getElementById(graphContainerId);
+                    if (!container) {
+                        console.error("Graph container not found!");
+                        return;
+                    }
+                    const data = {
+                        nodes: new vis.DataSet(graphData.nodes),
+                        edges: new vis.DataSet(graphData.edges),
+                    };
+                    const options = {
+                        layout: {
+                            hierarchical: {
+                                enabled: true,
+                                direction: 'UD', // Up-Down
+                                sortMethod: 'directed',
+                                shakeTowards: 'roots'
+                            },
+                        },
+                        physics: false,
+                        nodes: {
+                            shape: 'box',
+                            margin: 10,
+                            font: { color: '#333' },
+                            color: {
+                                border: '#007bff',
+                                background: '#e6f0ff',
+                                highlight: { border: '#005a8a', background: '#d1e6ff' },
+                            },
+                        },
+                        edges: {
+                            arrows: 'to',
+                            smooth: true,
+                            color: { color: '#555', highlight: '#007bff' }
+                        },
+                    };
+                    const network = new vis.Network(container, data, options);
+                } catch (e) {
+                    console.error("Error creating graph:", e);
+                    graphContainer.textContent = "Error loading graph. See console for details.";
+                }
+            }, 50); // 50ms delay to ensure DOM is ready
+        }
+
+    </script>
+</body>
+</html>
+

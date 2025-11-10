@@ -18,10 +18,10 @@ if not API_KEY:
 # --- API Configuration ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") # Renamed for clarity
 OPENAI_API_KEY = os.getenv("GPT_API_KEY") # Add OpenAI API Key
-print('GOOGLE_API_KEY', GOOGLE_API_KEY)
 
 # --- Model IDs ---
-DEFAULT_GENERATIVE_LLM_PROVIDER = "google" # "google" or "openai"
+DEFAULT_GENERATIVE_LLM_PROVIDER = "google" # "google" or "openai" or "local"
+DEFAULT_LOCAL_MODEL_PATH = "fine_tunned_model/sft_model_gen_gemini_train_mistral_v1_self-improve_train_mistral_v2" # <-- ADD THIS LINE
 
 # Google Gemini
 DEFAULT_GOOGLE_MODEL_ID = "gemini-2.0-flash"
@@ -37,7 +37,7 @@ DEFAULT_DOCUMENTS_PATH_PATTERN = "../DataSets/TEST_SET/*" # "CNT_Papers/*" # Exa
 DEFAULT_LOG_FILE_PATH = "cnt_rag.log"
 DEFAULT_FEEDBACK_DB_PATH = "cnt_feedback_history.csv"
 DEFAULT_GRAPH_DIR = "cnt_rag_graphs"
-DEFAULT_TEST_QUESTIONS_PATH = "rag-eval/test_questions.txt" # Path to test questions
+DEFAULT_TEST_QUESTIONS_PATH = "rag-eval/test_questions-novice.txt" # Path to test questions
 
 # --- Default RAG Settings ---
 DEFAULT_VECTOR_DB_TYPE = "csv" # Options: "csv", "chroma", "inmemory"

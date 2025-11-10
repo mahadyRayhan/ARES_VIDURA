@@ -61,7 +61,7 @@ class CNTRagSystem:
         self.logger = logger
         self.feedback_db_path = feedback_db_path
         self.feedback_history = feedback_history # Use the passed list
-        self.user_type = 'advanced'
+        self.user_type = user_type
         self.graph_dir = graph_dir
         self.max_context_tokens = max_context_tokens
         self.char_to_token_ratio = char_to_token_ratio
@@ -510,6 +510,62 @@ class CNTRagSystem:
     #          final_response = re.sub(r"^\s*Final Synthesized Answer:?.*?\s*", "", final_response, flags=re.IGNORECASE | re.DOTALL).strip()
     #          return final_response
          
+    # def _generate_final_answer(self, original_query: str, accumulated_context_list: List[str]) -> str:
+    #     """Generates the final answer, optionally prompting the LLM to cite sources."""
+    #     self.logger.info(f"Generating final answer for '{self.user_type}' user...")
+    #     final_context_str = "\n\n==== CONTEXT FROM HOP/SUMMARY SEPARATOR ====\n\n".join(accumulated_context_list)
+
+    #     if not final_context_str.strip() or final_context_str.strip() == "No relevant context found.":
+    #         self.logger.warning("No context available for final answer generation.")
+    #         return "Based on the retrieved information, a detailed analysis could not be performed due to insufficient context."
+
+    #     # --- ABLATION C6: No Source Tagging ---
+    #     if self.use_source_tagging:
+    #         # This is your original, detailed prompt that enforces citations
+    #         prompt = f"""You are an expert researcher synthesizing a detailed technical analysis...
+    #         **Your Task:**
+    #         1.  **Synthesize and Structure:** Write a comprehensive, well-structured answer...
+    #         2.  **Cite Everything:** You MUST cite every piece of information you use from the context.
+    #         3.  **Citation Format:** The citation format MUST BE: `(Source: Doc: '[Doc]', Page: [Page], ChunkID: '[ChunkID]')`.
+    #         4.  **Strictly Adhere to Context:** Base your entire answer ONLY on the "Accumulated Context".
+    #         5.  **Identify Gaps:** ...add a final section titled "**Missing Information**"...
+    #         ---
+    #         **Original Question:** "{original_query}"
+    #         **Accumulated Context:**
+    #         --- START CONTEXT ---
+    #         {final_context_str}
+    #         --- END CONTEXT ---
+    #         **Final Synthesized Answer (Detailed, Structured, and with In-Text Citations):**
+    #         """
+    #     else:
+    #         # This is the new, simpler prompt for when source tagging is disabled
+    #         self.logger.info("ABLATION: Generating final answer without source tagging prompt.")
+    #         prompt = f"""You are an expert researcher synthesizing a detailed technical analysis for an advanced colleague on Carbon Nanotubes (CNTs).
+    #         Your task is to provide a comprehensive, clear, and well-structured answer to the user's question based ONLY on the provided technical context.
+    #         - Synthesize the information into a thorough and explanatory answer.
+    #         - Structure your answer logically with paragraphs and headings.
+    #         - Do NOT add any inline citations or source references.
+    #         - Do NOT mention the context or the documents it came from.
+            
+    #         **Original Question:** "{original_query}"
+
+    #         **Accumulated Context:**
+    #         --- START CONTEXT ---
+    #         {final_context_str}
+    #         --- END CONTEXT ---
+
+    #         **Final Synthesized Answer:**
+    #         """
+        
+    #     final_response = self.llm_interface.generate_response(prompt)
+    #     if final_response.startswith("LLM_ERROR"):
+    #          self.logger.error(f"Final answer generation failed: {final_response}")
+    #          return f"I encountered an error while trying to generate the final answer ({final_response})."
+    #     else:
+    #          self.logger.info(f"Final answer generated (length: {len(final_response)}).")
+    #          final_response = re.sub(r"^\s*Final Synthesized Answer:?.*?\s*", "", final_response, flags=re.IGNORECASE | re.DOTALL).strip()
+    #          return final_response
+    
     def _generate_final_answer(self, original_query: str, accumulated_context_list: List[str]) -> str:
         """Generates the final answer, optionally prompting the LLM to cite sources."""
         self.logger.info(f"Generating final answer for '{self.user_type}' user...")
@@ -521,41 +577,93 @@ class CNTRagSystem:
 
         # --- ABLATION C6: No Source Tagging ---
         if self.use_source_tagging:
-            # This is your original, detailed prompt that enforces citations
-            prompt = f"""You are an expert researcher synthesizing a detailed technical analysis...
-            **Your Task:**
-            1.  **Synthesize and Structure:** Write a comprehensive, well-structured answer...
-            2.  **Cite Everything:** You MUST cite every piece of information you use from the context.
-            3.  **Citation Format:** The citation format MUST BE: `(Source: Doc: '[Doc]', Page: [Page], ChunkID: '[ChunkID]')`.
-            4.  **Strictly Adhere to Context:** Base your entire answer ONLY on the "Accumulated Context".
-            5.  **Identify Gaps:** ...add a final section titled "**Missing Information**"...
-            ---
-            **Original Question:** "{original_query}"
-            **Accumulated Context:**
-            --- START CONTEXT ---
-            {final_context_str}
-            --- END CONTEXT ---
-            **Final Synthesized Answer (Detailed, Structured, and with In-Text Citations):**
-            """
+            # --- START OF FIX: Select prompt based on user type (with citations) ---
+            if self.user_type == "advanced":
+                self.logger.debug("Using 'advanced' prompt with citations.")
+                prompt = f"""You are an expert researcher synthesizing a detailed technical analysis for an advanced colleague on Carbon Nanotubes (CNTs).
+
+                **Original Question:**
+                "{original_query}"
+
+                **Accumulated Context:**
+                Use ONLY the following context to answer the question. Each piece of context is preceded by its source information in the format [Source: Doc: '...', Page: ..., ChunkID: '...'].
+                --- START CONTEXT ---
+                {final_context_str}
+                --- END CONTEXT ---
+
+                **Your Task:**
+                1.  **Synthesize and Structure:** Write a comprehensive, well-structured answer to the "Original Question". Organize your answer into logical sections with clear, bolded headings (e.g., using Markdown like **Heading Title**). Explain concepts and their relationships.
+                2.  **Cite Everything:** You MUST cite every piece of information you use from the context. Place the citation at the end of the sentence or clause that uses the information.
+                3.  **Citation Format:** The citation format MUST BE: `(Source: Doc: '[Doc]', Page: [Page], ChunkID: '[ChunkID]')`.
+                4.  **Strictly Adhere to Context:** Base your entire answer ONLY on the "Accumulated Context".
+                5.  **Identify Gaps:** After providing the main answer, add a final section titled "**Missing Information**". In this section, describe what specific technical details are needed but are not present in the provided context.
+
+                ---
+                **Final Synthesized Answer (Detailed, Structured, and with In-Text Citations):**
+                """
+            else: # "novice"
+                self.logger.debug("Using 'novice' prompt with citations.")
+                prompt = f"""You are a helpful assistant explaining a scientific topic to a beginner.
+
+                **Original Question:**
+                "{original_query}"
+
+                **Accumulated Context:**
+                Use ONLY the following context to answer the question. Each piece of context is preceded by its source information in the format [Source: Doc: '...', Page: ..., ChunkID: '...'].
+                --- START CONTEXT ---
+                {final_context_str}
+                --- END CONTEXT ---
+
+                **Your Task:**
+                1.  **Explain Simply:** Write a clear, simple answer to the "Original Question". Avoid complex scientific jargon. Explain concepts in an easy-to-understand way.
+                2.  **Cite Your Sources:** You MUST cite the information you use. Place the citation at the end of the sentence or clause that uses the information.
+                3.  **Citation Format:** The citation format MUST BE: `(Source: Doc: '[Doc]', Page: [Page], ChunkID: '[ChunkID]')`.
+                4.  **Strictly Adhere to Context:** Base your entire answer ONLY on the "Accumulated Context".
+
+                ---
+                **Final Answer (Simple, Clear, and with In-Text Citations):**
+                """
+            # --- END OF FIX ---
         else:
-            # This is the new, simpler prompt for when source tagging is disabled
+            # --- START OF FIX: Select prompt based on user type (NO citations) ---
             self.logger.info("ABLATION: Generating final answer without source tagging prompt.")
-            prompt = f"""You are an expert researcher synthesizing a detailed technical analysis for an advanced colleague on Carbon Nanotubes (CNTs).
-            Your task is to provide a comprehensive, clear, and well-structured answer to the user's question based ONLY on the provided technical context.
-            - Synthesize the information into a thorough and explanatory answer.
-            - Structure your answer logically with paragraphs and headings.
-            - Do NOT add any inline citations or source references.
-            - Do NOT mention the context or the documents it came from.
-            
-            **Original Question:** "{original_query}"
+            if self.user_type == "advanced":
+                self.logger.debug("Using 'advanced' prompt without citations.")
+                prompt = f"""You are an expert researcher synthesizing a detailed technical analysis for an advanced colleague on Carbon Nanotubes (CNTs).
+                Your task is to provide a comprehensive, clear, and well-structured answer to the user's question based ONLY on the provided technical context.
+                - Synthesize the information into a thorough and explanatory answer.
+                - Structure your answer logically with paragraphs and headings.
+                - Do NOT add any inline citations or source references.
+                - Do NOT mention the context or the documents it came from.
+                
+                **Original Question:** "{original_query}"
 
-            **Accumulated Context:**
-            --- START CONTEXT ---
-            {final_context_str}
-            --- END CONTEXT ---
+                **Accumulated Context:**
+                --- START CONTEXT ---
+                {final_context_str}
+                --- END CONTEXT ---
 
-            **Final Synthesized Answer:**
-            """
+                **Final Synthesized Answer:**
+                """
+            else: # "novice"
+                self.logger.debug("Using 'novice' prompt without citations.")
+                prompt = f"""You are a helpful assistant explaining a scientific topic to a beginner.
+                Your task is to provide a simple, clear answer to the user's question based ONLY on the provided technical context.
+                - Explain the main points clearly.
+                - Do NOT use complex jargon.
+                - Do NOT add any inline citations or source references.
+                - Do NOT mention the context or the documents it came from.
+                
+                **Original Question:** "{original_query}"
+
+                **Accumulated Context:**
+                --- START CONTEXT ---
+                {final_context_str}
+                --- END CONTEXT ---
+
+                **Final Answer (Simple and Clear):**
+                """
+            # --- END OF FIX ---
         
         final_response = self.llm_interface.generate_response(prompt)
         if final_response.startswith("LLM_ERROR"):
@@ -564,6 +672,8 @@ class CNTRagSystem:
         else:
              self.logger.info(f"Final answer generated (length: {len(final_response)}).")
              final_response = re.sub(r"^\s*Final Synthesized Answer:?.*?\s*", "", final_response, flags=re.IGNORECASE | re.DOTALL).strip()
+             # Also remove the simple "Final Answer:" prefix
+             final_response = re.sub(r"^\s*Final Answer:?.*?\s*", "", final_response, flags=re.IGNORECASE | re.DOTALL).strip()
              return final_response
 
     # --- NEW: Query Planner Function ---
@@ -723,6 +833,7 @@ class CNTRagSystem:
         JSON Output:
         """
         response_str = self.llm_interface.generate_response(prompt)
+        print(f"Router response: {response_str}")
         try:
             # Cleanup and parse the JSON response
             response_str = response_str.strip().replace("```json", "").replace("```", "").strip()

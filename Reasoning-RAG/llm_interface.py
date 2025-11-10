@@ -5,6 +5,10 @@ import re
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 from typing import Dict, List, Optional, Any
 
+import torch
+import transformers
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+
 import google.generativeai as genai
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings # Using Langchain for OpenAI
 # Alternatively, for direct OpenAI API usage for embeddings:
@@ -14,6 +18,14 @@ import io
 
 import config # Import config for defaults
 
+# --- ADD THE BNB_CONFIG ---
+# BNB_CONFIG = transformers.BitsAndBytesConfig(
+#     load_in_4bit=True, 
+#     bnb_4bit_use_double_quant=True,
+#     bnb_4bit_quant_type="nf4", 
+#     bnb_4bit_compute_dtype=torch.bfloat16
+# )
+
 class LLMInterface:
     """Handles interactions with LLM providers (Google Gemini or OpenAI)."""
 
@@ -21,6 +33,9 @@ class LLMInterface:
                  llm_provider: str = config.DEFAULT_GENERATIVE_LLM_PROVIDER,
                  google_api_key: Optional[str] = config.GOOGLE_API_KEY,
                  openai_api_key: Optional[str] = config.OPENAI_API_KEY,
+                 # --- ADD THIS NEW ARGUMENT ---
+                 local_model_path: str = config.DEFAULT_LOCAL_MODEL_PATH,
+                 # -----------------------------
                  # Google specific
                  google_model_id: str = config.DEFAULT_GOOGLE_MODEL_ID,
                  google_embedding_model_id: str = config.DEFAULT_GOOGLE_EMBEDDING_MODEL,
@@ -87,6 +102,36 @@ class LLMInterface:
             except Exception as e:
                 self.logger.error(f"Error initializing OpenAI clients: {e}")
                 raise
+        # --- ADD THIS ENTIRE BLOCK ---
+        elif self.llm_provider == "local":
+            print(f"\n\nInitializing LOCAL LLM Interface from path: {local_model_path}\n\n")
+            if not torch.cuda.is_available():
+                self.logger.warning("CUDA not available. Loading local model on CPU will be extremely slow.")
+
+            try:
+                self.local_model = AutoModelForCausalLM.from_pretrained(
+                    local_model_path,
+                    quantization_config=BNB_CONFIG,
+                    device_map="auto" # Automatically use GPU if available
+                )
+                self.local_tokenizer = AutoTokenizer.from_pretrained(local_model_path)
+                
+                # We still need an embedding model. We'll use Google's.
+                if not google_api_key:
+                    raise ValueError("Google API Key is required for embeddings, even when using a local generation model.")
+                
+                genai.configure(api_key=google_api_key)
+                self.google_embedding_model_name = f"models/{google_embedding_model_id}"
+                self.logger.info(f"Initialized Local Generation Model: {local_model_path}")
+                self.logger.info(f"Initialized Google Embedding Model: {google_embedding_model_id}")
+
+            except ImportError:
+                self.logger.error("transformers or torch not found. pip install transformers torch accelerate bitsandbytes")
+                raise
+            except Exception as e:
+                self.logger.error(f"Error loading local model from {local_model_path}: {e}")
+                raise
+        # --- END OF NEW BLOCK ---
         else:
             raise ValueError(f"Unsupported LLM provider: {self.llm_provider}. Choose 'google' or 'openai'.")
 
@@ -115,6 +160,16 @@ class LLMInterface:
                     task_type=task_type,
                 )
                 embedding = response.get('embedding')
+            # --- ADD THIS BLOCK ---
+            elif self.llm_provider == "local":
+                # Use Google for embeddings
+                response = genai.embed_content(
+                    model=self.google_embedding_model_name,
+                    content=text,
+                    task_type=task_type,
+                )
+                embedding = response.get('embedding')
+            # --- END OF NEW BLOCK ---
             elif self.llm_provider == "openai":
                 embedding = self.openai_embedding_client.embed_query(text) # Langchain method
 
@@ -224,7 +279,33 @@ class LLMInterface:
                 else:
                     self.logger.warning(f"OpenAI LLM Response structure unexpected: {response}")
                     generated_text = "LLM_ERROR: OpenAI response content not found or not a string."
-
+            # --- ADD THIS ENTIRE BLOCK ---
+            elif self.llm_provider == "local":
+                # Format the prompt using Mistral's chat template
+                # This template is from your config_GGG.py
+                prompt_template = f"<s>[INST] {prompt} [/INST]"
+                
+                # Tokenize the input
+                inputs = self.local_tokenizer(prompt_template, return_tensors="pt").to(self.local_model.device)
+                
+                # Generate the response
+                # Note: Adjust max_new_tokens as needed. This uses a default from your config.
+                outputs = self.local_model.generate(
+                    **inputs,
+                    max_new_tokens=config.DEFAULT_OPENAI_GENERATION_CONFIG.get("max_tokens", 2048), # Re-using this setting
+                    pad_token_id=self.local_tokenizer.eos_token_id
+                )
+                
+                # Decode the output, skipping the prompt
+                decoded_output = self.local_tokenizer.decode(outputs[0], skip_special_tokens=True)
+                
+                # Extract only the generated text (after the [/INST] tag)
+                generated_text = decoded_output.split("[/INST]")[-1].strip()
+                
+                if not generated_text:
+                     generated_text = "LLM_ERROR: Local model generated an empty response."
+            # --- END OF NEW BLOCK ---
+            
             elapsed_time = time.time() - start_time
             self.logger.debug(f"LLM generation ({self.llm_provider}) took {elapsed_time:.2f}s. Response length: {len(generated_text)}")
 

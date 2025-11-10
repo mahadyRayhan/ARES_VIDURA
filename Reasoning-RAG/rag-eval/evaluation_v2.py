@@ -21,6 +21,9 @@ from dotenv import load_dotenv
 
 # Load environment variables from a .env file in the parent directory
 load_dotenv('../../.env')
+from huggingface_hub import login
+hf_api_key = os.getenv("HF_API_KEY_HOME")
+login(token=hf_api_key)
 
 # ==============================================================================
 # --- 1. SETUP & ONE-TIME LOADING ---
@@ -241,8 +244,8 @@ def generate_summary_report(quantitative_results: list, grader_results: list, ex
 # --- 5. MAIN EXECUTION BLOCK ---
 # ==============================================================================
 if __name__ == '__main__':
-    EVAL_DATA_DIR = '../ablation_qa_outputs_complex_QA'
-    REPORTS_DIR = 'complex_QA_ablation_evaluation_reports'
+    EVAL_DATA_DIR = '../FT_eval'
+    REPORTS_DIR = '../FT_eval/reports'
     RAW_DATA_SUBDIR = 'raw_data'
     os.makedirs(REPORTS_DIR, exist_ok=True)
     raw_data_dir = os.path.join(REPORTS_DIR, RAW_DATA_SUBDIR); os.makedirs(raw_data_dir, exist_ok=True)

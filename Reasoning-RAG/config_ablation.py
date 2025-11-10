@@ -13,13 +13,13 @@
 # --- Core Retrieval & Reasoning ---
 USE_KNOWLEDGE_GRAPH = True  # If False, forces pure vector search (ablates KG).
 USE_MULTI_HOP = True        # If False, forces a single retrieval hop.
-USE_SOURCE_TAGGING = True   # If False, LLM is not prompted to add inline citations.
+USE_SOURCE_TAGGING = False   # If False, LLM is not prompted to add inline citations.
 
 # --- Prompt Ablation Setting ---
 # Options: "RIGOROUS" (V1 prompt, for C0) or "EFFICIENT" (Ablation prompt, for C1)
 REASONING_PROMPT_TYPE = "EFFICIENT" # <-- NEW SETTING
 
 # --- Ancillary Features ---
-USE_PROACTIVE_SUGGESTIONS = True # If False, disables the "You might also be interested in" feature.
+USE_PROACTIVE_SUGGESTIONS = False # If False, disables the "You might also be interested in" feature.
 USE_LLM_EVALUATION = True        # If False, disables LLM-based evaluation and confidence scoring.
-GENERATE_FLOW_GRAPH = True       # If False, disables the generation of the reasoning graph visualization.
+GENERATE_FLOW_GRAPH = False       # If False, disables the generation of the reasoning graph visualization.

@@ -70,5 +70,6 @@ fine-tune/generated_training_data/*
 fine-tune/trained_models/*
 fine-tune/unstructured_output/*
 fine-tune/evaluation_outputs/*
-RAG Model/cnt_feedback_history.csv
-RAG Model/multi-hop-reason/vector_db_cnt.csv
+Reasoning-RAG/cnt_feedback_history.csv
+Reasoning-RAG/vector_db_cnt.csv
+Reasoning-RAG/fine_tunned_model/*

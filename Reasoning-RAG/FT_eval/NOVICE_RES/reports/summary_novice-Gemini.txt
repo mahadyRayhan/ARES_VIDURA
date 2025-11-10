@@ -1,0 +1,28 @@
+################################################################################
+# --- AGGREGATED EVALUATION SCORES: novice-Gemini ---
+# Items Evaluated: 5
+################################################################################
+
+--- Lexical Similarity (Keyword-Based) ---
+  BLEU Score                      : 0.0291 (Higher is better)
+  ROUGE-1 (Unigram Recall)        : 0.3474 (Higher is better)
+  ROUGE-2 (Bigram Recall)         : 0.1117 (Higher is better)
+  ROUGE-L (Longest Subsequence)   : 0.2005 (Higher is better)
+  TF-IDF Cosine Similarity        : 0.4299 (Higher is better)
+
+--- Semantic Similarity (Meaning-Based vs. Reference Answer) ---
+  BERTScore Precision             : 0.9065 (Higher is better, less hallucination)
+  BERTScore Recall                : 0.8451 (Higher is better, more complete)
+  BERTScore F1                    : 0.8747 (Higher is better, balanced P and R)
+  Sentence-T Cosine Similarity    : 0.7826 (Higher is better)
+  Sentence-T Dot Product          : 0.7826 (Higher is better, unnormalized)
+
+--- Relevance & Correctness (Meaning-Based vs. Original Question) ---
+  Semantic Answer Similarity (SAS): nan (Higher is better)
+
+--- LLM-as-a-Grader Scores (1-5 Scale) ---
+  Avg. Correctness              : 4.8000 (Higher is better)
+  Avg. Completeness             : 2.2000 (Higher is better)
+  Avg. Conciseness              : 5.0000 (Higher is better)
+
+################################################################################

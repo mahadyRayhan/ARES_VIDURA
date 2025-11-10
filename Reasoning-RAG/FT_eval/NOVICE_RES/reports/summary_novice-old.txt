@@ -1,0 +1,28 @@
+################################################################################
+# --- AGGREGATED EVALUATION SCORES: novice-old ---
+# Items Evaluated: 5
+################################################################################
+
+--- Lexical Similarity (Keyword-Based) ---
+  BLEU Score                      : 0.1568 (Higher is better)
+  ROUGE-1 (Unigram Recall)        : 0.4590 (Higher is better)
+  ROUGE-2 (Bigram Recall)         : 0.2417 (Higher is better)
+  ROUGE-L (Longest Subsequence)   : 0.2794 (Higher is better)
+  TF-IDF Cosine Similarity        : 0.6614 (Higher is better)
+
+--- Semantic Similarity (Meaning-Based vs. Reference Answer) ---
+  BERTScore Precision             : 0.8724 (Higher is better, less hallucination)
+  BERTScore Recall                : 0.8873 (Higher is better, more complete)
+  BERTScore F1                    : 0.8797 (Higher is better, balanced P and R)
+  Sentence-T Cosine Similarity    : 0.8717 (Higher is better)
+  Sentence-T Dot Product          : 0.8717 (Higher is better, unnormalized)
+
+--- Relevance & Correctness (Meaning-Based vs. Original Question) ---
+  Semantic Answer Similarity (SAS): nan (Higher is better)
+
+--- LLM-as-a-Grader Scores (1-5 Scale) ---
+  Avg. Correctness              : 5.0000 (Higher is better)
+  Avg. Completeness             : 4.8000 (Higher is better)
+  Avg. Conciseness              : 3.2000 (Higher is better)
+
+################################################################################

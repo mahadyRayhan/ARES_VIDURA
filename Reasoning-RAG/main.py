@@ -106,7 +106,7 @@ if __name__ == "__main__":
     # Your previous main.py had a `user_type_input_str` but it wasn't clear how CNTRagSystem used it.
     # Let's assume CNTRagSystem might use it to tailor prompts.
     # If not, this can be simplified.
-    user_type_setting = "advanced" # Or load from config: config.DEFAULT_USER_TYPE
+    user_type_setting = "novice" # Or load from config: config.DEFAULT_USER_TYPE
     logger.info(f"Setting user type context to: {user_type_setting}")
 
 
@@ -117,6 +117,9 @@ if __name__ == "__main__":
             llm_provider=config.DEFAULT_GENERATIVE_LLM_PROVIDER,
             google_api_key=config.GOOGLE_API_KEY,
             openai_api_key=config.OPENAI_API_KEY,
+            # --- ADD THIS LINE ---
+            local_model_path=config.DEFAULT_LOCAL_MODEL_PATH,
+            # --------------------
             # Google specific args
             google_model_id=config.DEFAULT_GOOGLE_MODEL_ID,
             google_embedding_model_id=config.DEFAULT_GOOGLE_EMBEDDING_MODEL,
@@ -172,7 +175,7 @@ if __name__ == "__main__":
             logger=logger,
             feedback_db_path=config.DEFAULT_FEEDBACK_DB_PATH,
             feedback_history=feedback_history,
-            # user_type=user_type_setting, # Pass if CNTRagSystem uses it in __init__
+            user_type=user_type_setting, # Pass if CNTRagSystem uses it in __init__
             use_knowledge_graph=settings.USE_KNOWLEDGE_GRAPH,
             use_multi_hop=settings.USE_MULTI_HOP,
             use_source_tagging=settings.USE_SOURCE_TAGGING,
