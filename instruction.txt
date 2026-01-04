@@ -1,0 +1,3 @@
+run main.py to run the predefined questions as tests.
+run python app.py to run the web app and chat with the model.
+most probabely it will run ion "http://127.0.0.1:5000"
