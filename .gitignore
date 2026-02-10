@@ -73,3 +73,4 @@ fine-tune/evaluation_outputs/*
 Reasoning-RAG/cnt_feedback_history.csv
 Reasoning-RAG/vector_db_cnt.csv
 Reasoning-RAG/fine_tunned_model/*
+DEPLOYMENT/*

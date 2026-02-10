@@ -266,6 +266,73 @@
             border-radius: 0 0 10px 10px;
         }
 
+    
+
+/* --- FEEDBACK (THUMBS UP/DOWN) --- */
+.feedback-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    opacity: 0.95;
+}
+.feedback-btn {
+    border: 1px solid #d0d7de;
+    background: #fff;
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 1.05em;
+    line-height: 1;
+}
+.feedback-btn:hover { background: #f6f8fa; }
+.feedback-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.feedback-status { font-size: 0.85em; color: #666; margin-left: 6px; }
+
+.feedback-form {
+    display: none;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    background: #fff;
+}
+.feedback-form label {
+    display: block;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin: 6px 0 4px 0;
+    color: #444;
+}
+.feedback-form input[type="number"],
+.feedback-form textarea {
+    width: 100%;
+    border: 1px solid #CED4DA;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: Inter, sans-serif;
+    font-size: 0.95em;
+}
+.feedback-form textarea { min-height: 90px; resize: vertical; }
+.feedback-form .feedback-actions { display: flex; gap: 10px; margin-top: 10px; }
+.feedback-submit {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.feedback-cancel {
+    background: transparent;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
     </style>
 </head>
 <body>
@@ -315,6 +382,22 @@
         const chatInput = document.getElementById('chat-input');
         const sendButton = document.getElementById('send-btn');
 
+        // --- FEEDBACK: stable session id + per-answer message id ---
+        const SESSION_KEY = 'cnt_session_id';
+        let sessionId = localStorage.getItem(SESSION_KEY);
+        if (!sessionId) {
+            sessionId = (window.crypto && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            localStorage.setItem(SESSION_KEY, sessionId);
+        }
+        function newMessageId() {
+            return (window.crypto && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+
+
         // This array will hold the full chat history for context
         let chatHistory = [
             { role: "assistant", content: "Hello! I am your CNT Research Assistant. How can I help you today?" }
@@ -341,6 +424,7 @@
             chatInput.value = '';
 
             // Create placeholder for assistant response
+            const messageId = newMessageId();
             const assistantMessageElem = addMessageToUI('...', 'assistant', true);
 
             // --- Call the Flask Backend ---
@@ -429,6 +513,14 @@
                     reasoning: finalTrace.join('\n'),
                     graphData: finalGraphData
                 });
+
+                // Add thumbs up/down feedback UI for this assistant message
+                addFeedbackControls(assistantMessageElem, {
+                    sessionId,
+                    messageId,
+                    query: userInput,
+                    answer: finalContent
+                });
                 
                 // Add the final, complete response to history
                 chatHistory.push({ 
@@ -473,6 +565,152 @@
         function scrollToBottom() {
             chatBody.scrollTop = chatBody.scrollHeight;
         }
+
+
+
+// --- FEEDBACK: send thumbs up/down to backend (/feedback) ---
+async function postFeedback(payload) {
+    const res = await fetch('/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP error: ${res.status}`);
+    }
+    return res.json();
+}
+
+function addFeedbackControls(messageElement, { sessionId, messageId, query, answer }) {
+    const row = document.createElement('div');
+    row.className = 'feedback-row';
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'feedback-btn';
+    upBtn.type = 'button';
+    upBtn.title = 'Helpful';
+    upBtn.textContent = '👍';
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'feedback-btn';
+    downBtn.type = 'button';
+    downBtn.title = 'Not helpful';
+    downBtn.textContent = '👎';
+
+    const status = document.createElement('span');
+    status.className = 'feedback-status';
+    status.textContent = 'Feedback?';
+
+    row.appendChild(upBtn);
+    row.appendChild(downBtn);
+    row.appendChild(status);
+
+    const form = document.createElement('div');
+    form.className = 'feedback-form';
+
+    const ratingLabel = document.createElement('label');
+    ratingLabel.textContent = 'Rating (0-10)';
+    const ratingInput = document.createElement('input');
+    ratingInput.type = 'number';
+    ratingInput.min = '0';
+    ratingInput.max = '10';
+    ratingInput.placeholder = 'e.g., 3';
+
+    const commentLabel = document.createElement('label');
+    commentLabel.textContent = 'What was wrong / missing?';
+    const commentInput = document.createElement('textarea');
+    commentInput.placeholder = 'e.g., wrong conclusion, missing citation, too vague, etc.';
+
+    const actions = document.createElement('div');
+    actions.className = 'feedback-actions';
+
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'feedback-submit';
+    submitBtn.type = 'button';
+    submitBtn.textContent = 'Submit';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'feedback-cancel';
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Cancel';
+
+    actions.appendChild(submitBtn);
+    actions.appendChild(cancelBtn);
+
+    form.appendChild(ratingLabel);
+    form.appendChild(ratingInput);
+    form.appendChild(commentLabel);
+    form.appendChild(commentInput);
+    form.appendChild(actions);
+
+    messageElement.appendChild(row);
+    messageElement.appendChild(form);
+
+    function disableAll() {
+        upBtn.disabled = true;
+        downBtn.disabled = true;
+        submitBtn.disabled = true;
+        cancelBtn.disabled = true;
+        ratingInput.disabled = true;
+        commentInput.disabled = true;
+    }
+
+    upBtn.onclick = async () => {
+        try {
+            status.textContent = 'Saving...';
+            upBtn.disabled = true;
+            downBtn.disabled = true;
+            await postFeedback({
+                session_id: sessionId,
+                message_id: messageId,
+                vote: 'up',
+                query,
+                answer
+            });
+            status.textContent = 'Thanks!';
+        } catch (e) {
+            status.textContent = `Could not save: ${e.message}`;
+            upBtn.disabled = false;
+            downBtn.disabled = false;
+        }
+    };
+
+    downBtn.onclick = () => {
+        form.style.display = 'block';
+        status.textContent = 'Tell us what went wrong.';
+    };
+
+    cancelBtn.onclick = () => {
+        form.style.display = 'none';
+        status.textContent = 'Feedback?';
+    };
+
+    submitBtn.onclick = async () => {
+        try {
+            status.textContent = 'Saving...';
+            const ratingVal = ratingInput.value.trim();
+            const rating = ratingVal === '' ? '' : parseInt(ratingVal, 10);
+            const comment = commentInput.value.trim();
+
+            await postFeedback({
+                session_id: sessionId,
+                message_id: messageId,
+                vote: 'down',
+                rating_0_10: rating,
+                comment,
+                query,
+                answer
+            });
+
+            disableAll();
+            form.style.display = 'none';
+            status.textContent = 'Thanks — saved.';
+        } catch (e) {
+            status.textContent = `Could not save: ${e.message}`;
+        }
+    };
+}
 
         /**
          * Adds the RAG details expander to an assistant message

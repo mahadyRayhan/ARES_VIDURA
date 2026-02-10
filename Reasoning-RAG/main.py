@@ -106,7 +106,7 @@ if __name__ == "__main__":
     # Your previous main.py had a `user_type_input_str` but it wasn't clear how CNTRagSystem used it.
     # Let's assume CNTRagSystem might use it to tailor prompts.
     # If not, this can be simplified.
-    user_type_setting = "novice" # Or load from config: config.DEFAULT_USER_TYPE
+    user_type_setting = "expert" # Or load from config: config.DEFAULT_USER_TYPE
     logger.info(f"Setting user type context to: {user_type_setting}")
 
 

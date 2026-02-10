@@ -25,7 +25,8 @@ DEFAULT_LOCAL_MODEL_PATH = "fine_tunned_model/sft_model_gen_gemini_train_mistral
 
 # Google Gemini
 DEFAULT_GOOGLE_MODEL_ID = "gemini-2.0-flash"
-DEFAULT_GOOGLE_EMBEDDING_MODEL = "text-embedding-004"
+# DEFAULT_GOOGLE_EMBEDDING_MODEL = "text-embedding-004"
+DEFAULT_GOOGLE_EMBEDDING_MODEL = "gemini-embedding-001"
 
 # OpenAI
 DEFAULT_OPENAI_CHAT_MODEL = "gpt-4" # or "gpt-4", "gpt-4-turbo-preview" , "gpt-3.5-turbo" etc.
@@ -37,7 +38,7 @@ DEFAULT_DOCUMENTS_PATH_PATTERN = "../DataSets/TEST_SET/*" # "CNT_Papers/*" # Exa
 DEFAULT_LOG_FILE_PATH = "cnt_rag.log"
 DEFAULT_FEEDBACK_DB_PATH = "cnt_feedback_history.csv"
 DEFAULT_GRAPH_DIR = "cnt_rag_graphs"
-DEFAULT_TEST_QUESTIONS_PATH = "rag-eval/test_questions-novice.txt" # Path to test questions
+DEFAULT_TEST_QUESTIONS_PATH = "rag-eval/test_questions-expert.txt" # Path to test questions
 
 # --- Default RAG Settings ---
 DEFAULT_VECTOR_DB_TYPE = "csv" # Options: "csv", "chroma", "inmemory"
